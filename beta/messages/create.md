@@ -1567,6 +1567,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
               - `"query_too_long"`
 
+              - `"request_too_large"`
+
             - `type: "web_search_tool_result_error"`
 
               - `"web_search_tool_result_error"`
@@ -2488,6 +2490,47 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
             - `"1h"`
 
+      - `BetaCompactionBlockParam = object { content, type, cache_control }`
+
+        A compaction block containing summary of previous context.
+
+        Users should round-trip these blocks from responses to subsequent requests
+        to maintain context across compaction boundaries.
+
+        When content is None, the block represents a failed compaction. The server
+        treats these as no-ops. Empty string content is not allowed.
+
+        - `content: string`
+
+          Summary of previously compacted content, or null if compaction failed
+
+        - `type: "compaction"`
+
+          - `"compaction"`
+
+        - `cache_control: optional BetaCacheControlEphemeral`
+
+          Create a cache control breakpoint at this content block.
+
+          - `type: "ephemeral"`
+
+            - `"ephemeral"`
+
+          - `ttl: optional "5m" or "1h"`
+
+            The time-to-live for the cache control breakpoint.
+
+            This may be one the following values:
+
+            - `5m`: 5 minutes
+            - `1h`: 1 hour
+
+            Defaults to `5m`.
+
+            - `"5m"`
+
+            - `"1h"`
+
   - `role: "user" or "assistant"`
 
     - `"user"`
@@ -2500,11 +2543,15 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
   See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
 
-  - `UnionMember0 = "claude-opus-4-5-20251101" or "claude-opus-4-5" or "claude-3-7-sonnet-latest" or 17 more`
+  - `UnionMember0 = "claude-opus-4-6" or "claude-opus-4-5-20251101" or "claude-opus-4-5" or 18 more`
 
     The model that will complete your prompt.
 
     See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
+
+    - `"claude-opus-4-6"`
+
+      Most intelligent model for building agents and coding
 
     - `"claude-opus-4-5-20251101"`
 
@@ -2628,7 +2675,7 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
   This allows you to control how Claude manages context across multiple requests, such as whether to clear function results or not.
 
-  - `edits: optional array of BetaClearToolUses20250919Edit or BetaClearThinking20251015Edit`
+  - `edits: optional array of BetaClearToolUses20250919Edit or BetaClearThinking20251015Edit or BetaCompact20260112Edit`
 
     List of context management edits to apply
 
@@ -2718,6 +2765,36 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
           - `"all"`
 
+    - `BetaCompact20260112Edit = object { type, instructions, pause_after_compaction, trigger }`
+
+      Automatically compact older context when reaching the configured trigger threshold.
+
+      - `type: "compact_20260112"`
+
+        - `"compact_20260112"`
+
+      - `instructions: optional string`
+
+        Additional instructions for summarization.
+
+      - `pause_after_compaction: optional boolean`
+
+        Whether to pause after compaction and return the compaction block to the user.
+
+      - `trigger: optional BetaInputTokensTrigger`
+
+        When to trigger compaction. Defaults to 150000 input tokens.
+
+        - `type: "input_tokens"`
+
+          - `"input_tokens"`
+
+        - `value: number`
+
+- `inference_geo: optional string`
+
+  Specifies the geographic region for inference processing. If not specified, the workspace's `default_inference_geo` is used.
+
 - `mcp_servers: optional array of BetaRequestMCPServerURLDefinition`
 
   MCP servers to be utilized in this request
@@ -2750,9 +2827,9 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
 - `output_config: optional BetaOutputConfig`
 
-  Configuration options for the model's output. Controls aspects like how much effort the model puts into its response.
+  Configuration options for the model's output, such as the output format.
 
-  - `effort: optional "low" or "medium" or "high"`
+  - `effort: optional "low" or "medium" or "high" or "max"`
 
     All possible effort levels.
 
@@ -2762,9 +2839,25 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `"high"`
 
+    - `"max"`
+
+  - `format: optional BetaJSONOutputFormat`
+
+    A schema to specify Claude's output format in responses. See [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+
+    - `schema: map[unknown]`
+
+      The JSON schema of the format
+
+    - `type: "json_schema"`
+
+      - `"json_schema"`
+
 - `output_format: optional BetaJSONOutputFormat`
 
-  A schema to specify Claude's output format in responses.
+  Deprecated: Use `output_config.format` instead. See [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+
+  A schema to specify Claude's output format in responses. This parameter will be removed in a future release.
 
   - `schema: map[unknown]`
 
@@ -2955,6 +3048,12 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
       - `"disabled"`
 
+  - `BetaThinkingConfigAdaptive = object { type }`
+
+    - `type: "adaptive"`
+
+      - `"adaptive"`
+
 - `tool_choice: optional BetaToolChoice`
 
   How the model should use the provided tools. The model can use a specific tool, any available tool, decide by itself, or not use tools at all.
@@ -3077,7 +3176,7 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
   See our [guide](https://docs.claude.com/en/docs/tool-use) for more details.
 
-  - `BetaTool = object { input_schema, name, allowed_callers, 6 more }`
+  - `BetaTool = object { input_schema, name, allowed_callers, 7 more }`
 
     - `input_schema: object { type, properties, required }`
 
@@ -3138,9 +3237,15 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
       Tool descriptions should be as detailed as possible. The more information that the model has about what the tool is and how to use it, the better it will perform. You can use natural language descriptions to reinforce important aspects of the tool input JSON schema.
 
+    - `eager_input_streaming: optional boolean`
+
+      Enable eager input streaming for this tool. When true, tool input parameters will be streamed incrementally as they are generated, and types will be inferred on-the-fly rather than buffering the full JSON output. When false, streaming is disabled for this tool even if the fine-grained-tool-streaming beta is active. When null (default), uses the default behavior based on beta headers.
+
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
     - `type: optional "custom"`
 
@@ -3197,6 +3302,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolBash20250124 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "bash"`
@@ -3248,6 +3355,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaCodeExecutionTool20250522 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "code_execution"`
@@ -3297,6 +3406,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaCodeExecutionTool20250825 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "code_execution"`
@@ -3345,6 +3456,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
       If true, tool will not be included in initial system prompt. Only loaded when returned via tool_reference from tool search.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolComputerUse20241022 = object { display_height_px, display_width_px, name, 7 more }`
 
@@ -3409,6 +3522,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaMemoryTool20250818 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "memory"`
@@ -3459,6 +3574,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolComputerUse20250124 = object { display_height_px, display_width_px, name, 7 more }`
 
@@ -3523,6 +3640,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolTextEditor20241022 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "str_replace_editor"`
@@ -3573,6 +3692,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolComputerUse20251124 = object { display_height_px, display_width_px, name, 8 more }`
 
@@ -3641,6 +3762,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolTextEditor20250124 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "str_replace_editor"`
@@ -3692,6 +3815,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolTextEditor20250429 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "str_replace_based_edit_tool"`
@@ -3742,6 +3867,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolTextEditor20250728 = object { name, type, allowed_callers, 5 more }`
 
@@ -3797,6 +3924,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
       Maximum number of characters to display when viewing a file. If not specified, defaults to displaying the full file.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaWebSearchTool20250305 = object { name, type, allowed_callers, 7 more }`
 
@@ -3858,6 +3987,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
       Maximum number of times the tool can be used in the API request.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
     - `user_location: optional object { type, city, country, 2 more }`
 
@@ -3954,6 +4085,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolSearchToolBm25_20251119 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "tool_search_tool_bm25"`
@@ -4005,6 +4138,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolSearchToolRegex20251119 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "tool_search_tool_regex"`
@@ -4055,6 +4190,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
       If true, tool will not be included in initial system prompt. Only loaded when returned via tool_reference from tool search.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaMCPToolset = object { mcp_server_name, type, cache_control, 2 more }`
 
@@ -4349,31 +4486,9 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
             - `"code_execution_20250825"`
 
-    - `BetaServerToolUseBlock = object { id, caller, input, 2 more }`
+    - `BetaServerToolUseBlock = object { id, input, name, 2 more }`
 
       - `id: string`
-
-      - `caller: BetaDirectCaller or BetaServerToolCaller`
-
-        Tool invocation directly from the model.
-
-        - `BetaDirectCaller = object { type }`
-
-          Tool invocation directly from the model.
-
-          - `type: "direct"`
-
-            - `"direct"`
-
-        - `BetaServerToolCaller = object { tool_id, type }`
-
-          Tool invocation generated by a server-side tool.
-
-          - `tool_id: string`
-
-          - `type: "code_execution_20250825"`
-
-            - `"code_execution_20250825"`
 
       - `input: map[unknown]`
 
@@ -4397,6 +4512,28 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
         - `"server_tool_use"`
 
+      - `caller: optional BetaDirectCaller or BetaServerToolCaller`
+
+        Tool invocation directly from the model.
+
+        - `BetaDirectCaller = object { type }`
+
+          Tool invocation directly from the model.
+
+          - `type: "direct"`
+
+            - `"direct"`
+
+        - `BetaServerToolCaller = object { tool_id, type }`
+
+          Tool invocation generated by a server-side tool.
+
+          - `tool_id: string`
+
+          - `type: "code_execution_20250825"`
+
+            - `"code_execution_20250825"`
+
     - `BetaWebSearchToolResultBlock = object { content, tool_use_id, type }`
 
       - `content: BetaWebSearchToolResultBlockContent`
@@ -4414,6 +4551,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
             - `"too_many_requests"`
 
             - `"query_too_long"`
+
+            - `"request_too_large"`
 
           - `type: "web_search_tool_result_error"`
 
@@ -4883,6 +5022,22 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
         - `"container_upload"`
 
+    - `BetaCompactionBlock = object { content, type }`
+
+      A compaction block returned when autocompact is triggered.
+
+      When content is None, it indicates the compaction failed to produce a valid
+      summary (e.g., malformed output from the model). Clients may round-trip
+      compaction blocks with null content; the server treats them as no-ops.
+
+      - `content: string`
+
+        Summary of compacted content, or null if compaction failed
+
+      - `type: "compaction"`
+
+        - `"compaction"`
+
   - `context_management: BetaContextManagementResponse`
 
     Context management response.
@@ -4931,11 +5086,15 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
 
-    - `UnionMember0 = "claude-opus-4-5-20251101" or "claude-opus-4-5" or "claude-3-7-sonnet-latest" or 17 more`
+    - `UnionMember0 = "claude-opus-4-6" or "claude-opus-4-5-20251101" or "claude-opus-4-5" or 18 more`
 
       The model that will complete your prompt.
 
       See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
+
+      - `"claude-opus-4-6"`
+
+        Most intelligent model for building agents and coding
 
       - `"claude-opus-4-5-20251101"`
 
@@ -5052,6 +5211,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `"pause_turn"`
 
+    - `"compaction"`
+
     - `"refusal"`
 
     - `"model_context_window_exceeded"`
@@ -5102,9 +5263,99 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
       The number of input tokens read from the cache.
 
+    - `inference_geo: string`
+
+      The geographic region where inference was performed for this request.
+
     - `input_tokens: number`
 
       The number of input tokens which were used.
+
+    - `iterations: array of BetaMessageIterationUsage or BetaCompactionIterationUsage`
+
+      Per-iteration token usage breakdown.
+
+      Each entry represents one sampling iteration, with its own input/output token counts and cache statistics. This allows you to:
+
+      - Determine which iterations exceeded long context thresholds (>=200k tokens)
+      - Calculate the true context window size from the last iteration
+      - Understand token accumulation across server-side tool use loops
+
+      - `BetaMessageIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+        Token usage for a sampling iteration.
+
+        - `cache_creation: BetaCacheCreation`
+
+          Breakdown of cached tokens by TTL
+
+          - `ephemeral_1h_input_tokens: number`
+
+            The number of input tokens used to create the 1 hour cache entry.
+
+          - `ephemeral_5m_input_tokens: number`
+
+            The number of input tokens used to create the 5 minute cache entry.
+
+        - `cache_creation_input_tokens: number`
+
+          The number of input tokens used to create the cache entry.
+
+        - `cache_read_input_tokens: number`
+
+          The number of input tokens read from the cache.
+
+        - `input_tokens: number`
+
+          The number of input tokens which were used.
+
+        - `output_tokens: number`
+
+          The number of output tokens which were used.
+
+        - `type: "message"`
+
+          Usage for a sampling iteration
+
+          - `"message"`
+
+      - `BetaCompactionIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+        Token usage for a compaction iteration.
+
+        - `cache_creation: BetaCacheCreation`
+
+          Breakdown of cached tokens by TTL
+
+          - `ephemeral_1h_input_tokens: number`
+
+            The number of input tokens used to create the 1 hour cache entry.
+
+          - `ephemeral_5m_input_tokens: number`
+
+            The number of input tokens used to create the 5 minute cache entry.
+
+        - `cache_creation_input_tokens: number`
+
+          The number of input tokens used to create the cache entry.
+
+        - `cache_read_input_tokens: number`
+
+          The number of input tokens read from the cache.
+
+        - `input_tokens: number`
+
+          The number of input tokens which were used.
+
+        - `output_tokens: number`
+
+          The number of output tokens which were used.
+
+        - `type: "compaction"`
+
+          Usage for a compaction iteration
+
+          - `"compaction"`
 
     - `output_tokens: number`
 
@@ -5139,6 +5390,7 @@ curl https://api.anthropic.com/v1/messages \
     -H 'Content-Type: application/json' \
     -H 'anthropic-version: 2023-06-01' \
     -H "X-Api-Key: $ANTHROPIC_API_KEY" \
+    --max-time 600 \
     -d '{
           "max_tokens": 1024,
           "messages": [
@@ -5147,6 +5399,6 @@ curl https://api.anthropic.com/v1/messages \
               "role": "user"
             }
           ],
-          "model": "claude-sonnet-4-5-20250929"
+          "model": "claude-opus-4-6"
         }'
 ```

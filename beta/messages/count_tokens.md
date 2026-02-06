@@ -1559,6 +1559,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
               - `"query_too_long"`
 
+              - `"request_too_large"`
+
             - `type: "web_search_tool_result_error"`
 
               - `"web_search_tool_result_error"`
@@ -2480,6 +2482,47 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
             - `"1h"`
 
+      - `BetaCompactionBlockParam = object { content, type, cache_control }`
+
+        A compaction block containing summary of previous context.
+
+        Users should round-trip these blocks from responses to subsequent requests
+        to maintain context across compaction boundaries.
+
+        When content is None, the block represents a failed compaction. The server
+        treats these as no-ops. Empty string content is not allowed.
+
+        - `content: string`
+
+          Summary of previously compacted content, or null if compaction failed
+
+        - `type: "compaction"`
+
+          - `"compaction"`
+
+        - `cache_control: optional BetaCacheControlEphemeral`
+
+          Create a cache control breakpoint at this content block.
+
+          - `type: "ephemeral"`
+
+            - `"ephemeral"`
+
+          - `ttl: optional "5m" or "1h"`
+
+            The time-to-live for the cache control breakpoint.
+
+            This may be one the following values:
+
+            - `5m`: 5 minutes
+            - `1h`: 1 hour
+
+            Defaults to `5m`.
+
+            - `"5m"`
+
+            - `"1h"`
+
   - `role: "user" or "assistant"`
 
     - `"user"`
@@ -2492,11 +2535,15 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
   See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
 
-  - `UnionMember0 = "claude-opus-4-5-20251101" or "claude-opus-4-5" or "claude-3-7-sonnet-latest" or 17 more`
+  - `UnionMember0 = "claude-opus-4-6" or "claude-opus-4-5-20251101" or "claude-opus-4-5" or 18 more`
 
     The model that will complete your prompt.
 
     See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
+
+    - `"claude-opus-4-6"`
+
+      Most intelligent model for building agents and coding
 
     - `"claude-opus-4-5-20251101"`
 
@@ -2586,7 +2633,7 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
   This allows you to control how Claude manages context across multiple requests, such as whether to clear function results or not.
 
-  - `edits: optional array of BetaClearToolUses20250919Edit or BetaClearThinking20251015Edit`
+  - `edits: optional array of BetaClearToolUses20250919Edit or BetaClearThinking20251015Edit or BetaCompact20260112Edit`
 
     List of context management edits to apply
 
@@ -2676,6 +2723,32 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
           - `"all"`
 
+    - `BetaCompact20260112Edit = object { type, instructions, pause_after_compaction, trigger }`
+
+      Automatically compact older context when reaching the configured trigger threshold.
+
+      - `type: "compact_20260112"`
+
+        - `"compact_20260112"`
+
+      - `instructions: optional string`
+
+        Additional instructions for summarization.
+
+      - `pause_after_compaction: optional boolean`
+
+        Whether to pause after compaction and return the compaction block to the user.
+
+      - `trigger: optional BetaInputTokensTrigger`
+
+        When to trigger compaction. Defaults to 150000 input tokens.
+
+        - `type: "input_tokens"`
+
+          - `"input_tokens"`
+
+        - `value: number`
+
 - `mcp_servers: optional array of BetaRequestMCPServerURLDefinition`
 
   MCP servers to be utilized in this request
@@ -2698,9 +2771,9 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
 - `output_config: optional BetaOutputConfig`
 
-  Configuration options for the model's output. Controls aspects like how much effort the model puts into its response.
+  Configuration options for the model's output, such as the output format.
 
-  - `effort: optional "low" or "medium" or "high"`
+  - `effort: optional "low" or "medium" or "high" or "max"`
 
     All possible effort levels.
 
@@ -2710,9 +2783,25 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `"high"`
 
+    - `"max"`
+
+  - `format: optional BetaJSONOutputFormat`
+
+    A schema to specify Claude's output format in responses. See [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+
+    - `schema: map[unknown]`
+
+      The JSON schema of the format
+
+    - `type: "json_schema"`
+
+      - `"json_schema"`
+
 - `output_format: optional BetaJSONOutputFormat`
 
-  A schema to specify Claude's output format in responses.
+  Deprecated: Use `output_config.format` instead. See [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+
+  A schema to specify Claude's output format in responses. This parameter will be removed in a future release.
 
   - `schema: map[unknown]`
 
@@ -2871,6 +2960,12 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
       - `"disabled"`
 
+  - `BetaThinkingConfigAdaptive = object { type }`
+
+    - `type: "adaptive"`
+
+      - `"adaptive"`
+
 - `tool_choice: optional BetaToolChoice`
 
   How the model should use the provided tools. The model can use a specific tool, any available tool, decide by itself, or not use tools at all.
@@ -2993,7 +3088,7 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
   See our [guide](https://docs.claude.com/en/docs/tool-use) for more details.
 
-  - `BetaTool = object { input_schema, name, allowed_callers, 6 more }`
+  - `BetaTool = object { input_schema, name, allowed_callers, 7 more }`
 
     - `input_schema: object { type, properties, required }`
 
@@ -3054,9 +3149,15 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
       Tool descriptions should be as detailed as possible. The more information that the model has about what the tool is and how to use it, the better it will perform. You can use natural language descriptions to reinforce important aspects of the tool input JSON schema.
 
+    - `eager_input_streaming: optional boolean`
+
+      Enable eager input streaming for this tool. When true, tool input parameters will be streamed incrementally as they are generated, and types will be inferred on-the-fly rather than buffering the full JSON output. When false, streaming is disabled for this tool even if the fine-grained-tool-streaming beta is active. When null (default), uses the default behavior based on beta headers.
+
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
     - `type: optional "custom"`
 
@@ -3113,6 +3214,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolBash20250124 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "bash"`
@@ -3164,6 +3267,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaCodeExecutionTool20250522 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "code_execution"`
@@ -3213,6 +3318,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaCodeExecutionTool20250825 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "code_execution"`
@@ -3261,6 +3368,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
       If true, tool will not be included in initial system prompt. Only loaded when returned via tool_reference from tool search.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolComputerUse20241022 = object { display_height_px, display_width_px, name, 7 more }`
 
@@ -3325,6 +3434,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaMemoryTool20250818 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "memory"`
@@ -3375,6 +3486,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolComputerUse20250124 = object { display_height_px, display_width_px, name, 7 more }`
 
@@ -3439,6 +3552,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolTextEditor20241022 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "str_replace_editor"`
@@ -3489,6 +3604,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolComputerUse20251124 = object { display_height_px, display_width_px, name, 8 more }`
 
@@ -3557,6 +3674,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolTextEditor20250124 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "str_replace_editor"`
@@ -3608,6 +3727,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolTextEditor20250429 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "str_replace_based_edit_tool"`
@@ -3658,6 +3779,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolTextEditor20250728 = object { name, type, allowed_callers, 5 more }`
 
@@ -3713,6 +3836,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
       Maximum number of characters to display when viewing a file. If not specified, defaults to displaying the full file.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaWebSearchTool20250305 = object { name, type, allowed_callers, 7 more }`
 
@@ -3774,6 +3899,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
       Maximum number of times the tool can be used in the API request.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
     - `user_location: optional object { type, city, country, 2 more }`
 
@@ -3870,6 +3997,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolSearchToolBm25_20251119 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "tool_search_tool_bm25"`
@@ -3921,6 +4050,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolSearchToolRegex20251119 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "tool_search_tool_regex"`
@@ -3971,6 +4102,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
       If true, tool will not be included in initial system prompt. Only loaded when returned via tool_reference from tool search.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaMCPToolset = object { mcp_server_name, type, cache_control, 2 more }`
 
@@ -4056,6 +4189,6 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
               "role": "user"
             }
           ],
-          "model": "claude-opus-4-5-20251101"
+          "model": "claude-opus-4-6"
         }'
 ```

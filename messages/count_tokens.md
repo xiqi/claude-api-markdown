@@ -1362,7 +1362,7 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
           - `WebSearchToolRequestError = object { error_code, type }`
 
-            - `error_code: "invalid_tool_input" or "unavailable" or "max_uses_exceeded" or 2 more`
+            - `error_code: "invalid_tool_input" or "unavailable" or "max_uses_exceeded" or 3 more`
 
               - `"invalid_tool_input"`
 
@@ -1373,6 +1373,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
               - `"too_many_requests"`
 
               - `"query_too_long"`
+
+              - `"request_too_large"`
 
             - `type: "web_search_tool_result_error"`
 
@@ -1419,11 +1421,15 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
   See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
 
-  - `UnionMember0 = "claude-opus-4-5-20251101" or "claude-opus-4-5" or "claude-3-7-sonnet-latest" or 17 more`
+  - `UnionMember0 = "claude-opus-4-6" or "claude-opus-4-5-20251101" or "claude-opus-4-5" or 18 more`
 
     The model that will complete your prompt.
 
     See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
+
+    - `"claude-opus-4-6"`
+
+      Most intelligent model for building agents and coding
 
     - `"claude-opus-4-5-20251101"`
 
@@ -1506,6 +1512,34 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
       Our previous most fast and cost-effective
 
   - `UnionMember1 = string`
+
+- `output_config: optional OutputConfig`
+
+  Configuration options for the model's output, such as the output format.
+
+  - `effort: optional "low" or "medium" or "high" or "max"`
+
+    All possible effort levels.
+
+    - `"low"`
+
+    - `"medium"`
+
+    - `"high"`
+
+    - `"max"`
+
+  - `format: optional JSONOutputFormat`
+
+    A schema to specify Claude's output format in responses. See [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+
+    - `schema: map[unknown]`
+
+      The JSON schema of the format
+
+    - `type: "json_schema"`
+
+      - `"json_schema"`
 
 - `system: optional string or array of TextBlockParam`
 
@@ -1656,6 +1690,12 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
       - `"disabled"`
 
+  - `ThinkingConfigAdaptive = object { type }`
+
+    - `type: "adaptive"`
+
+      - `"adaptive"`
+
 - `tool_choice: optional ToolChoice`
 
   How the model should use the provided tools. The model can use a specific tool, any available tool, decide by itself, or not use tools at all.
@@ -1778,7 +1818,7 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
   See our [guide](https://docs.claude.com/en/docs/tool-use) for more details.
 
-  - `Tool = object { input_schema, name, cache_control, 2 more }`
+  - `Tool = object { input_schema, name, cache_control, 4 more }`
 
     - `input_schema: object { type, properties, required }`
 
@@ -1829,11 +1869,19 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
       Tool descriptions should be as detailed as possible. The more information that the model has about what the tool is and how to use it, the better it will perform. You can use natural language descriptions to reinforce important aspects of the tool input JSON schema.
 
+    - `eager_input_streaming: optional boolean`
+
+      Enable eager input streaming for this tool. When true, tool input parameters will be streamed incrementally as they are generated, and types will be inferred on-the-fly rather than buffering the full JSON output. When false, streaming is disabled for this tool even if the fine-grained-tool-streaming beta is active. When null (default), uses the default behavior based on beta headers.
+
+    - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
+
     - `type: optional "custom"`
 
       - `"custom"`
 
-  - `ToolBash20250124 = object { name, type, cache_control }`
+  - `ToolBash20250124 = object { name, type, cache_control, strict }`
 
     - `name: "bash"`
 
@@ -1870,7 +1918,11 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
         - `"1h"`
 
-  - `ToolTextEditor20250124 = object { name, type, cache_control }`
+    - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
+
+  - `ToolTextEditor20250124 = object { name, type, cache_control, strict }`
 
     - `name: "str_replace_editor"`
 
@@ -1907,7 +1959,11 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
         - `"1h"`
 
-  - `ToolTextEditor20250429 = object { name, type, cache_control }`
+    - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
+
+  - `ToolTextEditor20250429 = object { name, type, cache_control, strict }`
 
     - `name: "str_replace_based_edit_tool"`
 
@@ -1944,7 +2000,11 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
         - `"1h"`
 
-  - `ToolTextEditor20250728 = object { name, type, cache_control, max_characters }`
+    - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
+
+  - `ToolTextEditor20250728 = object { name, type, cache_control, 2 more }`
 
     - `name: "str_replace_based_edit_tool"`
 
@@ -1985,7 +2045,11 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
       Maximum number of characters to display when viewing a file. If not specified, defaults to displaying the full file.
 
-  - `WebSearchTool20250305 = object { name, type, allowed_domains, 4 more }`
+    - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
+
+  - `WebSearchTool20250305 = object { name, type, allowed_domains, 5 more }`
 
     - `name: "web_search"`
 
@@ -2034,6 +2098,10 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
       Maximum number of times the tool can be used in the API request.
 
+    - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
+
     - `user_location: optional object { type, city, country, 2 more }`
 
       Parameters for the user's location. Used to provide more relevant search results.
@@ -2080,6 +2148,6 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
               "role": "user"
             }
           ],
-          "model": "claude-opus-4-5-20251101"
+          "model": "claude-opus-4-6"
         }'
 ```

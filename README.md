@@ -8,7 +8,7 @@ Include this repository in your project to give your coding agent access to the 
 
 ## Last Updated
 
-This repository is an exact copy of the official documentation as of ***2026-01-14***.
+This repository is an exact copy of the official documentation as of ***2026-02-06***.
 
 ## Repository
 
@@ -94,9 +94,9 @@ This repository is an exact copy of the official documentation as of ***2026-01-
       - [Update Workspace Member](admin/workspaces/members/update.md)
       - [Delete Workspace Member](admin/workspaces/members/delete.md)
   - API Keys
-    - [Get Api Key](admin/api_keys/retrieve.md)
-    - [List Api Keys](admin/api_keys/list.md)
-    - [Update Api Key](admin/api_keys/update.md)
+    - [Get API Key](admin/api_keys/retrieve.md)
+    - [List API Keys](admin/api_keys/list.md)
+    - [Update API Key](admin/api_keys/update.md)
   - Usage Report
     - [Get Messages Usage Report](admin/usage_report/retrieve_messages.md)
     - [Get Claude Code Usage Report](admin/usage_report/retrieve_claude_code.md)

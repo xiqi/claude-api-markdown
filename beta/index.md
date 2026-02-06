@@ -2107,6 +2107,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
               - `"query_too_long"`
 
+              - `"request_too_large"`
+
             - `type: "web_search_tool_result_error"`
 
               - `"web_search_tool_result_error"`
@@ -3028,6 +3030,47 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
             - `"1h"`
 
+      - `BetaCompactionBlockParam = object { content, type, cache_control }`
+
+        A compaction block containing summary of previous context.
+
+        Users should round-trip these blocks from responses to subsequent requests
+        to maintain context across compaction boundaries.
+
+        When content is None, the block represents a failed compaction. The server
+        treats these as no-ops. Empty string content is not allowed.
+
+        - `content: string`
+
+          Summary of previously compacted content, or null if compaction failed
+
+        - `type: "compaction"`
+
+          - `"compaction"`
+
+        - `cache_control: optional BetaCacheControlEphemeral`
+
+          Create a cache control breakpoint at this content block.
+
+          - `type: "ephemeral"`
+
+            - `"ephemeral"`
+
+          - `ttl: optional "5m" or "1h"`
+
+            The time-to-live for the cache control breakpoint.
+
+            This may be one the following values:
+
+            - `5m`: 5 minutes
+            - `1h`: 1 hour
+
+            Defaults to `5m`.
+
+            - `"5m"`
+
+            - `"1h"`
+
   - `role: "user" or "assistant"`
 
     - `"user"`
@@ -3040,11 +3083,15 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
   See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
 
-  - `UnionMember0 = "claude-opus-4-5-20251101" or "claude-opus-4-5" or "claude-3-7-sonnet-latest" or 17 more`
+  - `UnionMember0 = "claude-opus-4-6" or "claude-opus-4-5-20251101" or "claude-opus-4-5" or 18 more`
 
     The model that will complete your prompt.
 
     See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
+
+    - `"claude-opus-4-6"`
+
+      Most intelligent model for building agents and coding
 
     - `"claude-opus-4-5-20251101"`
 
@@ -3168,7 +3215,7 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
   This allows you to control how Claude manages context across multiple requests, such as whether to clear function results or not.
 
-  - `edits: optional array of BetaClearToolUses20250919Edit or BetaClearThinking20251015Edit`
+  - `edits: optional array of BetaClearToolUses20250919Edit or BetaClearThinking20251015Edit or BetaCompact20260112Edit`
 
     List of context management edits to apply
 
@@ -3258,6 +3305,36 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
           - `"all"`
 
+    - `BetaCompact20260112Edit = object { type, instructions, pause_after_compaction, trigger }`
+
+      Automatically compact older context when reaching the configured trigger threshold.
+
+      - `type: "compact_20260112"`
+
+        - `"compact_20260112"`
+
+      - `instructions: optional string`
+
+        Additional instructions for summarization.
+
+      - `pause_after_compaction: optional boolean`
+
+        Whether to pause after compaction and return the compaction block to the user.
+
+      - `trigger: optional BetaInputTokensTrigger`
+
+        When to trigger compaction. Defaults to 150000 input tokens.
+
+        - `type: "input_tokens"`
+
+          - `"input_tokens"`
+
+        - `value: number`
+
+- `inference_geo: optional string`
+
+  Specifies the geographic region for inference processing. If not specified, the workspace's `default_inference_geo` is used.
+
 - `mcp_servers: optional array of BetaRequestMCPServerURLDefinition`
 
   MCP servers to be utilized in this request
@@ -3290,9 +3367,9 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
 - `output_config: optional BetaOutputConfig`
 
-  Configuration options for the model's output. Controls aspects like how much effort the model puts into its response.
+  Configuration options for the model's output, such as the output format.
 
-  - `effort: optional "low" or "medium" or "high"`
+  - `effort: optional "low" or "medium" or "high" or "max"`
 
     All possible effort levels.
 
@@ -3302,9 +3379,25 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `"high"`
 
+    - `"max"`
+
+  - `format: optional BetaJSONOutputFormat`
+
+    A schema to specify Claude's output format in responses. See [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+
+    - `schema: map[unknown]`
+
+      The JSON schema of the format
+
+    - `type: "json_schema"`
+
+      - `"json_schema"`
+
 - `output_format: optional BetaJSONOutputFormat`
 
-  A schema to specify Claude's output format in responses.
+  Deprecated: Use `output_config.format` instead. See [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+
+  A schema to specify Claude's output format in responses. This parameter will be removed in a future release.
 
   - `schema: map[unknown]`
 
@@ -3495,6 +3588,12 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
       - `"disabled"`
 
+  - `BetaThinkingConfigAdaptive = object { type }`
+
+    - `type: "adaptive"`
+
+      - `"adaptive"`
+
 - `tool_choice: optional BetaToolChoice`
 
   How the model should use the provided tools. The model can use a specific tool, any available tool, decide by itself, or not use tools at all.
@@ -3617,7 +3716,7 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
   See our [guide](https://docs.claude.com/en/docs/tool-use) for more details.
 
-  - `BetaTool = object { input_schema, name, allowed_callers, 6 more }`
+  - `BetaTool = object { input_schema, name, allowed_callers, 7 more }`
 
     - `input_schema: object { type, properties, required }`
 
@@ -3678,9 +3777,15 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
       Tool descriptions should be as detailed as possible. The more information that the model has about what the tool is and how to use it, the better it will perform. You can use natural language descriptions to reinforce important aspects of the tool input JSON schema.
 
+    - `eager_input_streaming: optional boolean`
+
+      Enable eager input streaming for this tool. When true, tool input parameters will be streamed incrementally as they are generated, and types will be inferred on-the-fly rather than buffering the full JSON output. When false, streaming is disabled for this tool even if the fine-grained-tool-streaming beta is active. When null (default), uses the default behavior based on beta headers.
+
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
     - `type: optional "custom"`
 
@@ -3737,6 +3842,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolBash20250124 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "bash"`
@@ -3788,6 +3895,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaCodeExecutionTool20250522 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "code_execution"`
@@ -3837,6 +3946,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaCodeExecutionTool20250825 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "code_execution"`
@@ -3885,6 +3996,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
       If true, tool will not be included in initial system prompt. Only loaded when returned via tool_reference from tool search.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolComputerUse20241022 = object { display_height_px, display_width_px, name, 7 more }`
 
@@ -3949,6 +4062,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaMemoryTool20250818 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "memory"`
@@ -3999,6 +4114,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolComputerUse20250124 = object { display_height_px, display_width_px, name, 7 more }`
 
@@ -4063,6 +4180,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolTextEditor20241022 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "str_replace_editor"`
@@ -4113,6 +4232,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolComputerUse20251124 = object { display_height_px, display_width_px, name, 8 more }`
 
@@ -4181,6 +4302,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolTextEditor20250124 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "str_replace_editor"`
@@ -4232,6 +4355,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolTextEditor20250429 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "str_replace_based_edit_tool"`
@@ -4282,6 +4407,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolTextEditor20250728 = object { name, type, allowed_callers, 5 more }`
 
@@ -4337,6 +4464,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
       Maximum number of characters to display when viewing a file. If not specified, defaults to displaying the full file.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaWebSearchTool20250305 = object { name, type, allowed_callers, 7 more }`
 
@@ -4398,6 +4527,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
       Maximum number of times the tool can be used in the API request.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
     - `user_location: optional object { type, city, country, 2 more }`
 
@@ -4494,6 +4625,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolSearchToolBm25_20251119 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "tool_search_tool_bm25"`
@@ -4545,6 +4678,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolSearchToolRegex20251119 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "tool_search_tool_regex"`
@@ -4595,6 +4730,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
       If true, tool will not be included in initial system prompt. Only loaded when returned via tool_reference from tool search.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaMCPToolset = object { mcp_server_name, type, cache_control, 2 more }`
 
@@ -4889,31 +5026,9 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
             - `"code_execution_20250825"`
 
-    - `BetaServerToolUseBlock = object { id, caller, input, 2 more }`
+    - `BetaServerToolUseBlock = object { id, input, name, 2 more }`
 
       - `id: string`
-
-      - `caller: BetaDirectCaller or BetaServerToolCaller`
-
-        Tool invocation directly from the model.
-
-        - `BetaDirectCaller = object { type }`
-
-          Tool invocation directly from the model.
-
-          - `type: "direct"`
-
-            - `"direct"`
-
-        - `BetaServerToolCaller = object { tool_id, type }`
-
-          Tool invocation generated by a server-side tool.
-
-          - `tool_id: string`
-
-          - `type: "code_execution_20250825"`
-
-            - `"code_execution_20250825"`
 
       - `input: map[unknown]`
 
@@ -4937,6 +5052,28 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
         - `"server_tool_use"`
 
+      - `caller: optional BetaDirectCaller or BetaServerToolCaller`
+
+        Tool invocation directly from the model.
+
+        - `BetaDirectCaller = object { type }`
+
+          Tool invocation directly from the model.
+
+          - `type: "direct"`
+
+            - `"direct"`
+
+        - `BetaServerToolCaller = object { tool_id, type }`
+
+          Tool invocation generated by a server-side tool.
+
+          - `tool_id: string`
+
+          - `type: "code_execution_20250825"`
+
+            - `"code_execution_20250825"`
+
     - `BetaWebSearchToolResultBlock = object { content, tool_use_id, type }`
 
       - `content: BetaWebSearchToolResultBlockContent`
@@ -4954,6 +5091,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
             - `"too_many_requests"`
 
             - `"query_too_long"`
+
+            - `"request_too_large"`
 
           - `type: "web_search_tool_result_error"`
 
@@ -5423,6 +5562,22 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
         - `"container_upload"`
 
+    - `BetaCompactionBlock = object { content, type }`
+
+      A compaction block returned when autocompact is triggered.
+
+      When content is None, it indicates the compaction failed to produce a valid
+      summary (e.g., malformed output from the model). Clients may round-trip
+      compaction blocks with null content; the server treats them as no-ops.
+
+      - `content: string`
+
+        Summary of compacted content, or null if compaction failed
+
+      - `type: "compaction"`
+
+        - `"compaction"`
+
   - `context_management: BetaContextManagementResponse`
 
     Context management response.
@@ -5471,11 +5626,15 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
 
-    - `UnionMember0 = "claude-opus-4-5-20251101" or "claude-opus-4-5" or "claude-3-7-sonnet-latest" or 17 more`
+    - `UnionMember0 = "claude-opus-4-6" or "claude-opus-4-5-20251101" or "claude-opus-4-5" or 18 more`
 
       The model that will complete your prompt.
 
       See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
+
+      - `"claude-opus-4-6"`
+
+        Most intelligent model for building agents and coding
 
       - `"claude-opus-4-5-20251101"`
 
@@ -5592,6 +5751,8 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
     - `"pause_turn"`
 
+    - `"compaction"`
+
     - `"refusal"`
 
     - `"model_context_window_exceeded"`
@@ -5642,9 +5803,99 @@ Learn more about the Messages API in our [user guide](https://docs.claude.com/en
 
       The number of input tokens read from the cache.
 
+    - `inference_geo: string`
+
+      The geographic region where inference was performed for this request.
+
     - `input_tokens: number`
 
       The number of input tokens which were used.
+
+    - `iterations: array of BetaMessageIterationUsage or BetaCompactionIterationUsage`
+
+      Per-iteration token usage breakdown.
+
+      Each entry represents one sampling iteration, with its own input/output token counts and cache statistics. This allows you to:
+
+      - Determine which iterations exceeded long context thresholds (>=200k tokens)
+      - Calculate the true context window size from the last iteration
+      - Understand token accumulation across server-side tool use loops
+
+      - `BetaMessageIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+        Token usage for a sampling iteration.
+
+        - `cache_creation: BetaCacheCreation`
+
+          Breakdown of cached tokens by TTL
+
+          - `ephemeral_1h_input_tokens: number`
+
+            The number of input tokens used to create the 1 hour cache entry.
+
+          - `ephemeral_5m_input_tokens: number`
+
+            The number of input tokens used to create the 5 minute cache entry.
+
+        - `cache_creation_input_tokens: number`
+
+          The number of input tokens used to create the cache entry.
+
+        - `cache_read_input_tokens: number`
+
+          The number of input tokens read from the cache.
+
+        - `input_tokens: number`
+
+          The number of input tokens which were used.
+
+        - `output_tokens: number`
+
+          The number of output tokens which were used.
+
+        - `type: "message"`
+
+          Usage for a sampling iteration
+
+          - `"message"`
+
+      - `BetaCompactionIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+        Token usage for a compaction iteration.
+
+        - `cache_creation: BetaCacheCreation`
+
+          Breakdown of cached tokens by TTL
+
+          - `ephemeral_1h_input_tokens: number`
+
+            The number of input tokens used to create the 1 hour cache entry.
+
+          - `ephemeral_5m_input_tokens: number`
+
+            The number of input tokens used to create the 5 minute cache entry.
+
+        - `cache_creation_input_tokens: number`
+
+          The number of input tokens used to create the cache entry.
+
+        - `cache_read_input_tokens: number`
+
+          The number of input tokens read from the cache.
+
+        - `input_tokens: number`
+
+          The number of input tokens which were used.
+
+        - `output_tokens: number`
+
+          The number of output tokens which were used.
+
+        - `type: "compaction"`
+
+          Usage for a compaction iteration
+
+          - `"compaction"`
 
     - `output_tokens: number`
 
@@ -5679,6 +5930,7 @@ curl https://api.anthropic.com/v1/messages \
     -H 'Content-Type: application/json' \
     -H 'anthropic-version: 2023-06-01' \
     -H "X-Api-Key: $ANTHROPIC_API_KEY" \
+    --max-time 600 \
     -d '{
           "max_tokens": 1024,
           "messages": [
@@ -5687,7 +5939,7 @@ curl https://api.anthropic.com/v1/messages \
               "role": "user"
             }
           ],
-          "model": "claude-sonnet-4-5-20250929"
+          "model": "claude-opus-4-6"
         }'
 ```
 
@@ -7252,6 +7504,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
               - `"query_too_long"`
 
+              - `"request_too_large"`
+
             - `type: "web_search_tool_result_error"`
 
               - `"web_search_tool_result_error"`
@@ -8173,6 +8427,47 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
             - `"1h"`
 
+      - `BetaCompactionBlockParam = object { content, type, cache_control }`
+
+        A compaction block containing summary of previous context.
+
+        Users should round-trip these blocks from responses to subsequent requests
+        to maintain context across compaction boundaries.
+
+        When content is None, the block represents a failed compaction. The server
+        treats these as no-ops. Empty string content is not allowed.
+
+        - `content: string`
+
+          Summary of previously compacted content, or null if compaction failed
+
+        - `type: "compaction"`
+
+          - `"compaction"`
+
+        - `cache_control: optional BetaCacheControlEphemeral`
+
+          Create a cache control breakpoint at this content block.
+
+          - `type: "ephemeral"`
+
+            - `"ephemeral"`
+
+          - `ttl: optional "5m" or "1h"`
+
+            The time-to-live for the cache control breakpoint.
+
+            This may be one the following values:
+
+            - `5m`: 5 minutes
+            - `1h`: 1 hour
+
+            Defaults to `5m`.
+
+            - `"5m"`
+
+            - `"1h"`
+
   - `role: "user" or "assistant"`
 
     - `"user"`
@@ -8185,11 +8480,15 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
   See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
 
-  - `UnionMember0 = "claude-opus-4-5-20251101" or "claude-opus-4-5" or "claude-3-7-sonnet-latest" or 17 more`
+  - `UnionMember0 = "claude-opus-4-6" or "claude-opus-4-5-20251101" or "claude-opus-4-5" or 18 more`
 
     The model that will complete your prompt.
 
     See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
+
+    - `"claude-opus-4-6"`
+
+      Most intelligent model for building agents and coding
 
     - `"claude-opus-4-5-20251101"`
 
@@ -8279,7 +8578,7 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
   This allows you to control how Claude manages context across multiple requests, such as whether to clear function results or not.
 
-  - `edits: optional array of BetaClearToolUses20250919Edit or BetaClearThinking20251015Edit`
+  - `edits: optional array of BetaClearToolUses20250919Edit or BetaClearThinking20251015Edit or BetaCompact20260112Edit`
 
     List of context management edits to apply
 
@@ -8369,6 +8668,32 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
           - `"all"`
 
+    - `BetaCompact20260112Edit = object { type, instructions, pause_after_compaction, trigger }`
+
+      Automatically compact older context when reaching the configured trigger threshold.
+
+      - `type: "compact_20260112"`
+
+        - `"compact_20260112"`
+
+      - `instructions: optional string`
+
+        Additional instructions for summarization.
+
+      - `pause_after_compaction: optional boolean`
+
+        Whether to pause after compaction and return the compaction block to the user.
+
+      - `trigger: optional BetaInputTokensTrigger`
+
+        When to trigger compaction. Defaults to 150000 input tokens.
+
+        - `type: "input_tokens"`
+
+          - `"input_tokens"`
+
+        - `value: number`
+
 - `mcp_servers: optional array of BetaRequestMCPServerURLDefinition`
 
   MCP servers to be utilized in this request
@@ -8391,9 +8716,9 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
 - `output_config: optional BetaOutputConfig`
 
-  Configuration options for the model's output. Controls aspects like how much effort the model puts into its response.
+  Configuration options for the model's output, such as the output format.
 
-  - `effort: optional "low" or "medium" or "high"`
+  - `effort: optional "low" or "medium" or "high" or "max"`
 
     All possible effort levels.
 
@@ -8403,9 +8728,25 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `"high"`
 
+    - `"max"`
+
+  - `format: optional BetaJSONOutputFormat`
+
+    A schema to specify Claude's output format in responses. See [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+
+    - `schema: map[unknown]`
+
+      The JSON schema of the format
+
+    - `type: "json_schema"`
+
+      - `"json_schema"`
+
 - `output_format: optional BetaJSONOutputFormat`
 
-  A schema to specify Claude's output format in responses.
+  Deprecated: Use `output_config.format` instead. See [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+
+  A schema to specify Claude's output format in responses. This parameter will be removed in a future release.
 
   - `schema: map[unknown]`
 
@@ -8564,6 +8905,12 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
       - `"disabled"`
 
+  - `BetaThinkingConfigAdaptive = object { type }`
+
+    - `type: "adaptive"`
+
+      - `"adaptive"`
+
 - `tool_choice: optional BetaToolChoice`
 
   How the model should use the provided tools. The model can use a specific tool, any available tool, decide by itself, or not use tools at all.
@@ -8686,7 +9033,7 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
   See our [guide](https://docs.claude.com/en/docs/tool-use) for more details.
 
-  - `BetaTool = object { input_schema, name, allowed_callers, 6 more }`
+  - `BetaTool = object { input_schema, name, allowed_callers, 7 more }`
 
     - `input_schema: object { type, properties, required }`
 
@@ -8747,9 +9094,15 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
       Tool descriptions should be as detailed as possible. The more information that the model has about what the tool is and how to use it, the better it will perform. You can use natural language descriptions to reinforce important aspects of the tool input JSON schema.
 
+    - `eager_input_streaming: optional boolean`
+
+      Enable eager input streaming for this tool. When true, tool input parameters will be streamed incrementally as they are generated, and types will be inferred on-the-fly rather than buffering the full JSON output. When false, streaming is disabled for this tool even if the fine-grained-tool-streaming beta is active. When null (default), uses the default behavior based on beta headers.
+
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
     - `type: optional "custom"`
 
@@ -8806,6 +9159,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolBash20250124 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "bash"`
@@ -8857,6 +9212,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaCodeExecutionTool20250522 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "code_execution"`
@@ -8906,6 +9263,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaCodeExecutionTool20250825 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "code_execution"`
@@ -8954,6 +9313,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
       If true, tool will not be included in initial system prompt. Only loaded when returned via tool_reference from tool search.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolComputerUse20241022 = object { display_height_px, display_width_px, name, 7 more }`
 
@@ -9018,6 +9379,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaMemoryTool20250818 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "memory"`
@@ -9068,6 +9431,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolComputerUse20250124 = object { display_height_px, display_width_px, name, 7 more }`
 
@@ -9132,6 +9497,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolTextEditor20241022 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "str_replace_editor"`
@@ -9182,6 +9549,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolComputerUse20251124 = object { display_height_px, display_width_px, name, 8 more }`
 
@@ -9250,6 +9619,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolTextEditor20250124 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "str_replace_editor"`
@@ -9301,6 +9672,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolTextEditor20250429 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "str_replace_based_edit_tool"`
@@ -9351,6 +9724,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolTextEditor20250728 = object { name, type, allowed_callers, 5 more }`
 
@@ -9406,6 +9781,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
       Maximum number of characters to display when viewing a file. If not specified, defaults to displaying the full file.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaWebSearchTool20250305 = object { name, type, allowed_callers, 7 more }`
 
@@ -9467,6 +9844,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
       Maximum number of times the tool can be used in the API request.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
     - `user_location: optional object { type, city, country, 2 more }`
 
@@ -9563,6 +9942,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolSearchToolBm25_20251119 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "tool_search_tool_bm25"`
@@ -9614,6 +9995,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolSearchToolRegex20251119 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "tool_search_tool_regex"`
@@ -9664,6 +10047,8 @@ Learn more about token counting in our [user guide](https://docs.claude.com/en/d
       If true, tool will not be included in initial system prompt. Only loaded when returned via tool_reference from tool search.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaMCPToolset = object { mcp_server_name, type, cache_control, 2 more }`
 
@@ -9749,7 +10134,7 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
               "role": "user"
             }
           ],
-          "model": "claude-opus-4-5-20251101"
+          "model": "claude-opus-4-6"
         }'
 ```
 
@@ -10594,6 +10979,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
   - `strict: optional boolean`
 
+    When true, guarantees schema validation on tool names and inputs
+
 ### Beta Code Execution Tool 20250825
 
 - `BetaCodeExecutionTool20250825 = object { name, type, allowed_callers, 3 more }`
@@ -10644,6 +11031,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
     If true, tool will not be included in initial system prompt. Only loaded when returned via tool_reference from tool search.
 
   - `strict: optional boolean`
+
+    When true, guarantees schema validation on tool names and inputs
 
 ### Beta Code Execution Tool Result Block
 
@@ -10892,6 +11281,145 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     - `"code_execution_tool_result_error"`
 
+### Beta Compact 20260112 Edit
+
+- `BetaCompact20260112Edit = object { type, instructions, pause_after_compaction, trigger }`
+
+  Automatically compact older context when reaching the configured trigger threshold.
+
+  - `type: "compact_20260112"`
+
+    - `"compact_20260112"`
+
+  - `instructions: optional string`
+
+    Additional instructions for summarization.
+
+  - `pause_after_compaction: optional boolean`
+
+    Whether to pause after compaction and return the compaction block to the user.
+
+  - `trigger: optional BetaInputTokensTrigger`
+
+    When to trigger compaction. Defaults to 150000 input tokens.
+
+    - `type: "input_tokens"`
+
+      - `"input_tokens"`
+
+    - `value: number`
+
+### Beta Compaction Block
+
+- `BetaCompactionBlock = object { content, type }`
+
+  A compaction block returned when autocompact is triggered.
+
+  When content is None, it indicates the compaction failed to produce a valid
+  summary (e.g., malformed output from the model). Clients may round-trip
+  compaction blocks with null content; the server treats them as no-ops.
+
+  - `content: string`
+
+    Summary of compacted content, or null if compaction failed
+
+  - `type: "compaction"`
+
+    - `"compaction"`
+
+### Beta Compaction Block Param
+
+- `BetaCompactionBlockParam = object { content, type, cache_control }`
+
+  A compaction block containing summary of previous context.
+
+  Users should round-trip these blocks from responses to subsequent requests
+  to maintain context across compaction boundaries.
+
+  When content is None, the block represents a failed compaction. The server
+  treats these as no-ops. Empty string content is not allowed.
+
+  - `content: string`
+
+    Summary of previously compacted content, or null if compaction failed
+
+  - `type: "compaction"`
+
+    - `"compaction"`
+
+  - `cache_control: optional BetaCacheControlEphemeral`
+
+    Create a cache control breakpoint at this content block.
+
+    - `type: "ephemeral"`
+
+      - `"ephemeral"`
+
+    - `ttl: optional "5m" or "1h"`
+
+      The time-to-live for the cache control breakpoint.
+
+      This may be one the following values:
+
+      - `5m`: 5 minutes
+      - `1h`: 1 hour
+
+      Defaults to `5m`.
+
+      - `"5m"`
+
+      - `"1h"`
+
+### Beta Compaction Content Block Delta
+
+- `BetaCompactionContentBlockDelta = object { content, type }`
+
+  - `content: string`
+
+  - `type: "compaction_delta"`
+
+    - `"compaction_delta"`
+
+### Beta Compaction Iteration Usage
+
+- `BetaCompactionIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+  Token usage for a compaction iteration.
+
+  - `cache_creation: BetaCacheCreation`
+
+    Breakdown of cached tokens by TTL
+
+    - `ephemeral_1h_input_tokens: number`
+
+      The number of input tokens used to create the 1 hour cache entry.
+
+    - `ephemeral_5m_input_tokens: number`
+
+      The number of input tokens used to create the 5 minute cache entry.
+
+  - `cache_creation_input_tokens: number`
+
+    The number of input tokens used to create the cache entry.
+
+  - `cache_read_input_tokens: number`
+
+    The number of input tokens read from the cache.
+
+  - `input_tokens: number`
+
+    The number of input tokens which were used.
+
+  - `output_tokens: number`
+
+    The number of output tokens which were used.
+
+  - `type: "compaction"`
+
+    Usage for a compaction iteration
+
+    - `"compaction"`
+
 ### Beta Container
 
 - `BetaContainer = object { id, expires_at, skills }`
@@ -11006,7 +11534,7 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
 ### Beta Content Block
 
-- `BetaContentBlock = BetaTextBlock or BetaThinkingBlock or BetaRedactedThinkingBlock or 11 more`
+- `BetaContentBlock = BetaTextBlock or BetaThinkingBlock or BetaRedactedThinkingBlock or 12 more`
 
   Response model for a file uploaded to the container.
 
@@ -11162,31 +11690,9 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
           - `"code_execution_20250825"`
 
-  - `BetaServerToolUseBlock = object { id, caller, input, 2 more }`
+  - `BetaServerToolUseBlock = object { id, input, name, 2 more }`
 
     - `id: string`
-
-    - `caller: BetaDirectCaller or BetaServerToolCaller`
-
-      Tool invocation directly from the model.
-
-      - `BetaDirectCaller = object { type }`
-
-        Tool invocation directly from the model.
-
-        - `type: "direct"`
-
-          - `"direct"`
-
-      - `BetaServerToolCaller = object { tool_id, type }`
-
-        Tool invocation generated by a server-side tool.
-
-        - `tool_id: string`
-
-        - `type: "code_execution_20250825"`
-
-          - `"code_execution_20250825"`
 
     - `input: map[unknown]`
 
@@ -11210,6 +11716,28 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
       - `"server_tool_use"`
 
+    - `caller: optional BetaDirectCaller or BetaServerToolCaller`
+
+      Tool invocation directly from the model.
+
+      - `BetaDirectCaller = object { type }`
+
+        Tool invocation directly from the model.
+
+        - `type: "direct"`
+
+          - `"direct"`
+
+      - `BetaServerToolCaller = object { tool_id, type }`
+
+        Tool invocation generated by a server-side tool.
+
+        - `tool_id: string`
+
+        - `type: "code_execution_20250825"`
+
+          - `"code_execution_20250825"`
+
   - `BetaWebSearchToolResultBlock = object { content, tool_use_id, type }`
 
     - `content: BetaWebSearchToolResultBlockContent`
@@ -11227,6 +11755,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
           - `"too_many_requests"`
 
           - `"query_too_long"`
+
+          - `"request_too_large"`
 
         - `type: "web_search_tool_result_error"`
 
@@ -11696,9 +12226,25 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
       - `"container_upload"`
 
+  - `BetaCompactionBlock = object { content, type }`
+
+    A compaction block returned when autocompact is triggered.
+
+    When content is None, it indicates the compaction failed to produce a valid
+    summary (e.g., malformed output from the model). Clients may round-trip
+    compaction blocks with null content; the server treats them as no-ops.
+
+    - `content: string`
+
+      Summary of compacted content, or null if compaction failed
+
+    - `type: "compaction"`
+
+      - `"compaction"`
+
 ### Beta Content Block Param
 
-- `BetaContentBlockParam = BetaTextBlockParam or BetaImageBlockParam or BetaRequestDocumentBlock or 15 more`
+- `BetaContentBlockParam = BetaTextBlockParam or BetaImageBlockParam or BetaRequestDocumentBlock or 16 more`
 
   Regular text content.
 
@@ -13146,6 +13692,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
           - `"query_too_long"`
 
+          - `"request_too_large"`
+
         - `type: "web_search_tool_result_error"`
 
           - `"web_search_tool_result_error"`
@@ -14067,6 +14615,47 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
         - `"1h"`
 
+  - `BetaCompactionBlockParam = object { content, type, cache_control }`
+
+    A compaction block containing summary of previous context.
+
+    Users should round-trip these blocks from responses to subsequent requests
+    to maintain context across compaction boundaries.
+
+    When content is None, the block represents a failed compaction. The server
+    treats these as no-ops. Empty string content is not allowed.
+
+    - `content: string`
+
+      Summary of previously compacted content, or null if compaction failed
+
+    - `type: "compaction"`
+
+      - `"compaction"`
+
+    - `cache_control: optional BetaCacheControlEphemeral`
+
+      Create a cache control breakpoint at this content block.
+
+      - `type: "ephemeral"`
+
+        - `"ephemeral"`
+
+      - `ttl: optional "5m" or "1h"`
+
+        The time-to-live for the cache control breakpoint.
+
+        This may be one the following values:
+
+        - `5m`: 5 minutes
+        - `1h`: 1 hour
+
+        Defaults to `5m`.
+
+        - `"5m"`
+
+        - `"1h"`
+
 ### Beta Content Block Source
 
 - `BetaContentBlockSource = object { content, type }`
@@ -14445,7 +15034,7 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
 - `BetaContextManagementConfig = object { edits }`
 
-  - `edits: optional array of BetaClearToolUses20250919Edit or BetaClearThinking20251015Edit`
+  - `edits: optional array of BetaClearToolUses20250919Edit or BetaClearThinking20251015Edit or BetaCompact20260112Edit`
 
     List of context management edits to apply
 
@@ -14534,6 +15123,32 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
         - `UnionMember2 = "all"`
 
           - `"all"`
+
+    - `BetaCompact20260112Edit = object { type, instructions, pause_after_compaction, trigger }`
+
+      Automatically compact older context when reaching the configured trigger threshold.
+
+      - `type: "compact_20260112"`
+
+        - `"compact_20260112"`
+
+      - `instructions: optional string`
+
+        Additional instructions for summarization.
+
+      - `pause_after_compaction: optional boolean`
+
+        Whether to pause after compaction and return the compaction block to the user.
+
+      - `trigger: optional BetaInputTokensTrigger`
+
+        When to trigger compaction. Defaults to 150000 input tokens.
+
+        - `type: "input_tokens"`
+
+          - `"input_tokens"`
+
+        - `value: number`
 
 ### Beta Context Management Response
 
@@ -15072,6 +15687,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
   - `strict: optional boolean`
 
+    When true, guarantees schema validation on tool names and inputs
+
 ### Beta Memory Tool 20250818 Command
 
 - `BetaMemoryTool20250818Command = BetaMemoryTool20250818ViewCommand or BetaMemoryTool20250818CreateCommand or BetaMemoryTool20250818StrReplaceCommand or 3 more`
@@ -15511,31 +16128,9 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
             - `"code_execution_20250825"`
 
-    - `BetaServerToolUseBlock = object { id, caller, input, 2 more }`
+    - `BetaServerToolUseBlock = object { id, input, name, 2 more }`
 
       - `id: string`
-
-      - `caller: BetaDirectCaller or BetaServerToolCaller`
-
-        Tool invocation directly from the model.
-
-        - `BetaDirectCaller = object { type }`
-
-          Tool invocation directly from the model.
-
-          - `type: "direct"`
-
-            - `"direct"`
-
-        - `BetaServerToolCaller = object { tool_id, type }`
-
-          Tool invocation generated by a server-side tool.
-
-          - `tool_id: string`
-
-          - `type: "code_execution_20250825"`
-
-            - `"code_execution_20250825"`
 
       - `input: map[unknown]`
 
@@ -15559,6 +16154,28 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
         - `"server_tool_use"`
 
+      - `caller: optional BetaDirectCaller or BetaServerToolCaller`
+
+        Tool invocation directly from the model.
+
+        - `BetaDirectCaller = object { type }`
+
+          Tool invocation directly from the model.
+
+          - `type: "direct"`
+
+            - `"direct"`
+
+        - `BetaServerToolCaller = object { tool_id, type }`
+
+          Tool invocation generated by a server-side tool.
+
+          - `tool_id: string`
+
+          - `type: "code_execution_20250825"`
+
+            - `"code_execution_20250825"`
+
     - `BetaWebSearchToolResultBlock = object { content, tool_use_id, type }`
 
       - `content: BetaWebSearchToolResultBlockContent`
@@ -15576,6 +16193,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
             - `"too_many_requests"`
 
             - `"query_too_long"`
+
+            - `"request_too_large"`
 
           - `type: "web_search_tool_result_error"`
 
@@ -16045,6 +16664,22 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
         - `"container_upload"`
 
+    - `BetaCompactionBlock = object { content, type }`
+
+      A compaction block returned when autocompact is triggered.
+
+      When content is None, it indicates the compaction failed to produce a valid
+      summary (e.g., malformed output from the model). Clients may round-trip
+      compaction blocks with null content; the server treats them as no-ops.
+
+      - `content: string`
+
+        Summary of compacted content, or null if compaction failed
+
+      - `type: "compaction"`
+
+        - `"compaction"`
+
   - `context_management: BetaContextManagementResponse`
 
     Context management response.
@@ -16093,11 +16728,15 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
 
-    - `UnionMember0 = "claude-opus-4-5-20251101" or "claude-opus-4-5" or "claude-3-7-sonnet-latest" or 17 more`
+    - `UnionMember0 = "claude-opus-4-6" or "claude-opus-4-5-20251101" or "claude-opus-4-5" or 18 more`
 
       The model that will complete your prompt.
 
       See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
+
+      - `"claude-opus-4-6"`
+
+        Most intelligent model for building agents and coding
 
       - `"claude-opus-4-5-20251101"`
 
@@ -16214,6 +16853,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     - `"pause_turn"`
 
+    - `"compaction"`
+
     - `"refusal"`
 
     - `"model_context_window_exceeded"`
@@ -16264,9 +16905,99 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
       The number of input tokens read from the cache.
 
+    - `inference_geo: string`
+
+      The geographic region where inference was performed for this request.
+
     - `input_tokens: number`
 
       The number of input tokens which were used.
+
+    - `iterations: array of BetaMessageIterationUsage or BetaCompactionIterationUsage`
+
+      Per-iteration token usage breakdown.
+
+      Each entry represents one sampling iteration, with its own input/output token counts and cache statistics. This allows you to:
+
+      - Determine which iterations exceeded long context thresholds (>=200k tokens)
+      - Calculate the true context window size from the last iteration
+      - Understand token accumulation across server-side tool use loops
+
+      - `BetaMessageIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+        Token usage for a sampling iteration.
+
+        - `cache_creation: BetaCacheCreation`
+
+          Breakdown of cached tokens by TTL
+
+          - `ephemeral_1h_input_tokens: number`
+
+            The number of input tokens used to create the 1 hour cache entry.
+
+          - `ephemeral_5m_input_tokens: number`
+
+            The number of input tokens used to create the 5 minute cache entry.
+
+        - `cache_creation_input_tokens: number`
+
+          The number of input tokens used to create the cache entry.
+
+        - `cache_read_input_tokens: number`
+
+          The number of input tokens read from the cache.
+
+        - `input_tokens: number`
+
+          The number of input tokens which were used.
+
+        - `output_tokens: number`
+
+          The number of output tokens which were used.
+
+        - `type: "message"`
+
+          Usage for a sampling iteration
+
+          - `"message"`
+
+      - `BetaCompactionIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+        Token usage for a compaction iteration.
+
+        - `cache_creation: BetaCacheCreation`
+
+          Breakdown of cached tokens by TTL
+
+          - `ephemeral_1h_input_tokens: number`
+
+            The number of input tokens used to create the 1 hour cache entry.
+
+          - `ephemeral_5m_input_tokens: number`
+
+            The number of input tokens used to create the 5 minute cache entry.
+
+        - `cache_creation_input_tokens: number`
+
+          The number of input tokens used to create the cache entry.
+
+        - `cache_read_input_tokens: number`
+
+          The number of input tokens read from the cache.
+
+        - `input_tokens: number`
+
+          The number of input tokens which were used.
+
+        - `output_tokens: number`
+
+          The number of output tokens which were used.
+
+        - `type: "compaction"`
+
+          Usage for a compaction iteration
+
+          - `"compaction"`
 
     - `output_tokens: number`
 
@@ -16296,7 +17027,7 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
 ### Beta Message Delta Usage
 
-- `BetaMessageDeltaUsage = object { cache_creation_input_tokens, cache_read_input_tokens, input_tokens, 2 more }`
+- `BetaMessageDeltaUsage = object { cache_creation_input_tokens, cache_read_input_tokens, input_tokens, 3 more }`
 
   - `cache_creation_input_tokens: number`
 
@@ -16309,6 +17040,92 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
   - `input_tokens: number`
 
     The cumulative number of input tokens which were used.
+
+  - `iterations: array of BetaMessageIterationUsage or BetaCompactionIterationUsage`
+
+    Per-iteration token usage breakdown.
+
+    Each entry represents one sampling iteration, with its own input/output token counts and cache statistics. This allows you to:
+
+    - Determine which iterations exceeded long context thresholds (>=200k tokens)
+    - Calculate the true context window size from the last iteration
+    - Understand token accumulation across server-side tool use loops
+
+    - `BetaMessageIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+      Token usage for a sampling iteration.
+
+      - `cache_creation: BetaCacheCreation`
+
+        Breakdown of cached tokens by TTL
+
+        - `ephemeral_1h_input_tokens: number`
+
+          The number of input tokens used to create the 1 hour cache entry.
+
+        - `ephemeral_5m_input_tokens: number`
+
+          The number of input tokens used to create the 5 minute cache entry.
+
+      - `cache_creation_input_tokens: number`
+
+        The number of input tokens used to create the cache entry.
+
+      - `cache_read_input_tokens: number`
+
+        The number of input tokens read from the cache.
+
+      - `input_tokens: number`
+
+        The number of input tokens which were used.
+
+      - `output_tokens: number`
+
+        The number of output tokens which were used.
+
+      - `type: "message"`
+
+        Usage for a sampling iteration
+
+        - `"message"`
+
+    - `BetaCompactionIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+      Token usage for a compaction iteration.
+
+      - `cache_creation: BetaCacheCreation`
+
+        Breakdown of cached tokens by TTL
+
+        - `ephemeral_1h_input_tokens: number`
+
+          The number of input tokens used to create the 1 hour cache entry.
+
+        - `ephemeral_5m_input_tokens: number`
+
+          The number of input tokens used to create the 5 minute cache entry.
+
+      - `cache_creation_input_tokens: number`
+
+        The number of input tokens used to create the cache entry.
+
+      - `cache_read_input_tokens: number`
+
+        The number of input tokens read from the cache.
+
+      - `input_tokens: number`
+
+        The number of input tokens which were used.
+
+      - `output_tokens: number`
+
+        The number of output tokens which were used.
+
+      - `type: "compaction"`
+
+        Usage for a compaction iteration
+
+        - `"compaction"`
 
   - `output_tokens: number`
 
@@ -16325,6 +17142,46 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
     - `web_search_requests: number`
 
       The number of web search tool requests.
+
+### Beta Message Iteration Usage
+
+- `BetaMessageIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+  Token usage for a sampling iteration.
+
+  - `cache_creation: BetaCacheCreation`
+
+    Breakdown of cached tokens by TTL
+
+    - `ephemeral_1h_input_tokens: number`
+
+      The number of input tokens used to create the 1 hour cache entry.
+
+    - `ephemeral_5m_input_tokens: number`
+
+      The number of input tokens used to create the 5 minute cache entry.
+
+  - `cache_creation_input_tokens: number`
+
+    The number of input tokens used to create the cache entry.
+
+  - `cache_read_input_tokens: number`
+
+    The number of input tokens read from the cache.
+
+  - `input_tokens: number`
+
+    The number of input tokens which were used.
+
+  - `output_tokens: number`
+
+    The number of output tokens which were used.
+
+  - `type: "message"`
+
+    Usage for a sampling iteration
+
+    - `"message"`
 
 ### Beta Message Param
 
@@ -17780,6 +18637,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
               - `"query_too_long"`
 
+              - `"request_too_large"`
+
             - `type: "web_search_tool_result_error"`
 
               - `"web_search_tool_result_error"`
@@ -18701,6 +19560,47 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
             - `"1h"`
 
+      - `BetaCompactionBlockParam = object { content, type, cache_control }`
+
+        A compaction block containing summary of previous context.
+
+        Users should round-trip these blocks from responses to subsequent requests
+        to maintain context across compaction boundaries.
+
+        When content is None, the block represents a failed compaction. The server
+        treats these as no-ops. Empty string content is not allowed.
+
+        - `content: string`
+
+          Summary of previously compacted content, or null if compaction failed
+
+        - `type: "compaction"`
+
+          - `"compaction"`
+
+        - `cache_control: optional BetaCacheControlEphemeral`
+
+          Create a cache control breakpoint at this content block.
+
+          - `type: "ephemeral"`
+
+            - `"ephemeral"`
+
+          - `ttl: optional "5m" or "1h"`
+
+            The time-to-live for the cache control breakpoint.
+
+            This may be one the following values:
+
+            - `5m`: 5 minutes
+            - `1h`: 1 hour
+
+            Defaults to `5m`.
+
+            - `"5m"`
+
+            - `"1h"`
+
   - `role: "user" or "assistant"`
 
     - `"user"`
@@ -18735,9 +19635,9 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
 ### Beta Output Config
 
-- `BetaOutputConfig = object { effort }`
+- `BetaOutputConfig = object { effort, format }`
 
-  - `effort: optional "low" or "medium" or "high"`
+  - `effort: optional "low" or "medium" or "high" or "max"`
 
     All possible effort levels.
 
@@ -18746,6 +19646,20 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
     - `"medium"`
 
     - `"high"`
+
+    - `"max"`
+
+  - `format: optional BetaJSONOutputFormat`
+
+    A schema to specify Claude's output format in responses. See [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+
+    - `schema: map[unknown]`
+
+      The JSON schema of the format
+
+    - `type: "json_schema"`
+
+      - `"json_schema"`
 
 ### Beta Plain Text Source
 
@@ -18763,7 +19677,7 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
 ### Beta Raw Content Block Delta
 
-- `BetaRawContentBlockDelta = BetaTextDelta or BetaInputJSONDelta or BetaCitationsDelta or 2 more`
+- `BetaRawContentBlockDelta = BetaTextDelta or BetaInputJSONDelta or BetaCitationsDelta or 3 more`
 
   - `BetaTextDelta = object { text, type }`
 
@@ -18890,6 +19804,14 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
     - `type: "signature_delta"`
 
       - `"signature_delta"`
+
+  - `BetaCompactionContentBlockDelta = object { content, type }`
+
+    - `content: string`
+
+    - `type: "compaction_delta"`
+
+      - `"compaction_delta"`
 
 ### Beta Raw Content Block Delta Event
 
@@ -19023,6 +19945,14 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
         - `"signature_delta"`
 
+    - `BetaCompactionContentBlockDelta = object { content, type }`
+
+      - `content: string`
+
+      - `type: "compaction_delta"`
+
+        - `"compaction_delta"`
+
   - `index: number`
 
   - `type: "content_block_delta"`
@@ -19033,7 +19963,7 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
 - `BetaRawContentBlockStartEvent = object { content_block, index, type }`
 
-  - `content_block: BetaTextBlock or BetaThinkingBlock or BetaRedactedThinkingBlock or 11 more`
+  - `content_block: BetaTextBlock or BetaThinkingBlock or BetaRedactedThinkingBlock or 12 more`
 
     Response model for a file uploaded to the container.
 
@@ -19189,31 +20119,9 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
             - `"code_execution_20250825"`
 
-    - `BetaServerToolUseBlock = object { id, caller, input, 2 more }`
+    - `BetaServerToolUseBlock = object { id, input, name, 2 more }`
 
       - `id: string`
-
-      - `caller: BetaDirectCaller or BetaServerToolCaller`
-
-        Tool invocation directly from the model.
-
-        - `BetaDirectCaller = object { type }`
-
-          Tool invocation directly from the model.
-
-          - `type: "direct"`
-
-            - `"direct"`
-
-        - `BetaServerToolCaller = object { tool_id, type }`
-
-          Tool invocation generated by a server-side tool.
-
-          - `tool_id: string`
-
-          - `type: "code_execution_20250825"`
-
-            - `"code_execution_20250825"`
 
       - `input: map[unknown]`
 
@@ -19237,6 +20145,28 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
         - `"server_tool_use"`
 
+      - `caller: optional BetaDirectCaller or BetaServerToolCaller`
+
+        Tool invocation directly from the model.
+
+        - `BetaDirectCaller = object { type }`
+
+          Tool invocation directly from the model.
+
+          - `type: "direct"`
+
+            - `"direct"`
+
+        - `BetaServerToolCaller = object { tool_id, type }`
+
+          Tool invocation generated by a server-side tool.
+
+          - `tool_id: string`
+
+          - `type: "code_execution_20250825"`
+
+            - `"code_execution_20250825"`
+
     - `BetaWebSearchToolResultBlock = object { content, tool_use_id, type }`
 
       - `content: BetaWebSearchToolResultBlockContent`
@@ -19254,6 +20184,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
             - `"too_many_requests"`
 
             - `"query_too_long"`
+
+            - `"request_too_large"`
 
           - `type: "web_search_tool_result_error"`
 
@@ -19723,6 +20655,22 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
         - `"container_upload"`
 
+    - `BetaCompactionBlock = object { content, type }`
+
+      A compaction block returned when autocompact is triggered.
+
+      When content is None, it indicates the compaction failed to produce a valid
+      summary (e.g., malformed output from the model). Clients may round-trip
+      compaction blocks with null content; the server treats them as no-ops.
+
+      - `content: string`
+
+        Summary of compacted content, or null if compaction failed
+
+      - `type: "compaction"`
+
+        - `"compaction"`
+
   - `index: number`
 
   - `type: "content_block_start"`
@@ -19829,6 +20777,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
       - `"pause_turn"`
 
+      - `"compaction"`
+
       - `"refusal"`
 
       - `"model_context_window_exceeded"`
@@ -19862,6 +20812,92 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
     - `input_tokens: number`
 
       The cumulative number of input tokens which were used.
+
+    - `iterations: array of BetaMessageIterationUsage or BetaCompactionIterationUsage`
+
+      Per-iteration token usage breakdown.
+
+      Each entry represents one sampling iteration, with its own input/output token counts and cache statistics. This allows you to:
+
+      - Determine which iterations exceeded long context thresholds (>=200k tokens)
+      - Calculate the true context window size from the last iteration
+      - Understand token accumulation across server-side tool use loops
+
+      - `BetaMessageIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+        Token usage for a sampling iteration.
+
+        - `cache_creation: BetaCacheCreation`
+
+          Breakdown of cached tokens by TTL
+
+          - `ephemeral_1h_input_tokens: number`
+
+            The number of input tokens used to create the 1 hour cache entry.
+
+          - `ephemeral_5m_input_tokens: number`
+
+            The number of input tokens used to create the 5 minute cache entry.
+
+        - `cache_creation_input_tokens: number`
+
+          The number of input tokens used to create the cache entry.
+
+        - `cache_read_input_tokens: number`
+
+          The number of input tokens read from the cache.
+
+        - `input_tokens: number`
+
+          The number of input tokens which were used.
+
+        - `output_tokens: number`
+
+          The number of output tokens which were used.
+
+        - `type: "message"`
+
+          Usage for a sampling iteration
+
+          - `"message"`
+
+      - `BetaCompactionIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+        Token usage for a compaction iteration.
+
+        - `cache_creation: BetaCacheCreation`
+
+          Breakdown of cached tokens by TTL
+
+          - `ephemeral_1h_input_tokens: number`
+
+            The number of input tokens used to create the 1 hour cache entry.
+
+          - `ephemeral_5m_input_tokens: number`
+
+            The number of input tokens used to create the 5 minute cache entry.
+
+        - `cache_creation_input_tokens: number`
+
+          The number of input tokens used to create the cache entry.
+
+        - `cache_read_input_tokens: number`
+
+          The number of input tokens read from the cache.
+
+        - `input_tokens: number`
+
+          The number of input tokens which were used.
+
+        - `output_tokens: number`
+
+          The number of output tokens which were used.
+
+        - `type: "compaction"`
+
+          Usage for a compaction iteration
+
+          - `"compaction"`
 
     - `output_tokens: number`
 
@@ -20104,31 +21140,9 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
               - `"code_execution_20250825"`
 
-      - `BetaServerToolUseBlock = object { id, caller, input, 2 more }`
+      - `BetaServerToolUseBlock = object { id, input, name, 2 more }`
 
         - `id: string`
-
-        - `caller: BetaDirectCaller or BetaServerToolCaller`
-
-          Tool invocation directly from the model.
-
-          - `BetaDirectCaller = object { type }`
-
-            Tool invocation directly from the model.
-
-            - `type: "direct"`
-
-              - `"direct"`
-
-          - `BetaServerToolCaller = object { tool_id, type }`
-
-            Tool invocation generated by a server-side tool.
-
-            - `tool_id: string`
-
-            - `type: "code_execution_20250825"`
-
-              - `"code_execution_20250825"`
 
         - `input: map[unknown]`
 
@@ -20152,6 +21166,28 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
           - `"server_tool_use"`
 
+        - `caller: optional BetaDirectCaller or BetaServerToolCaller`
+
+          Tool invocation directly from the model.
+
+          - `BetaDirectCaller = object { type }`
+
+            Tool invocation directly from the model.
+
+            - `type: "direct"`
+
+              - `"direct"`
+
+          - `BetaServerToolCaller = object { tool_id, type }`
+
+            Tool invocation generated by a server-side tool.
+
+            - `tool_id: string`
+
+            - `type: "code_execution_20250825"`
+
+              - `"code_execution_20250825"`
+
       - `BetaWebSearchToolResultBlock = object { content, tool_use_id, type }`
 
         - `content: BetaWebSearchToolResultBlockContent`
@@ -20169,6 +21205,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
               - `"too_many_requests"`
 
               - `"query_too_long"`
+
+              - `"request_too_large"`
 
             - `type: "web_search_tool_result_error"`
 
@@ -20638,6 +21676,22 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
           - `"container_upload"`
 
+      - `BetaCompactionBlock = object { content, type }`
+
+        A compaction block returned when autocompact is triggered.
+
+        When content is None, it indicates the compaction failed to produce a valid
+        summary (e.g., malformed output from the model). Clients may round-trip
+        compaction blocks with null content; the server treats them as no-ops.
+
+        - `content: string`
+
+          Summary of compacted content, or null if compaction failed
+
+        - `type: "compaction"`
+
+          - `"compaction"`
+
     - `context_management: BetaContextManagementResponse`
 
       Context management response.
@@ -20686,11 +21740,15 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
       See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
 
-      - `UnionMember0 = "claude-opus-4-5-20251101" or "claude-opus-4-5" or "claude-3-7-sonnet-latest" or 17 more`
+      - `UnionMember0 = "claude-opus-4-6" or "claude-opus-4-5-20251101" or "claude-opus-4-5" or 18 more`
 
         The model that will complete your prompt.
 
         See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
+
+        - `"claude-opus-4-6"`
+
+          Most intelligent model for building agents and coding
 
         - `"claude-opus-4-5-20251101"`
 
@@ -20807,6 +21865,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
       - `"pause_turn"`
 
+      - `"compaction"`
+
       - `"refusal"`
 
       - `"model_context_window_exceeded"`
@@ -20857,9 +21917,99 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
         The number of input tokens read from the cache.
 
+      - `inference_geo: string`
+
+        The geographic region where inference was performed for this request.
+
       - `input_tokens: number`
 
         The number of input tokens which were used.
+
+      - `iterations: array of BetaMessageIterationUsage or BetaCompactionIterationUsage`
+
+        Per-iteration token usage breakdown.
+
+        Each entry represents one sampling iteration, with its own input/output token counts and cache statistics. This allows you to:
+
+        - Determine which iterations exceeded long context thresholds (>=200k tokens)
+        - Calculate the true context window size from the last iteration
+        - Understand token accumulation across server-side tool use loops
+
+        - `BetaMessageIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+          Token usage for a sampling iteration.
+
+          - `cache_creation: BetaCacheCreation`
+
+            Breakdown of cached tokens by TTL
+
+            - `ephemeral_1h_input_tokens: number`
+
+              The number of input tokens used to create the 1 hour cache entry.
+
+            - `ephemeral_5m_input_tokens: number`
+
+              The number of input tokens used to create the 5 minute cache entry.
+
+          - `cache_creation_input_tokens: number`
+
+            The number of input tokens used to create the cache entry.
+
+          - `cache_read_input_tokens: number`
+
+            The number of input tokens read from the cache.
+
+          - `input_tokens: number`
+
+            The number of input tokens which were used.
+
+          - `output_tokens: number`
+
+            The number of output tokens which were used.
+
+          - `type: "message"`
+
+            Usage for a sampling iteration
+
+            - `"message"`
+
+        - `BetaCompactionIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+          Token usage for a compaction iteration.
+
+          - `cache_creation: BetaCacheCreation`
+
+            Breakdown of cached tokens by TTL
+
+            - `ephemeral_1h_input_tokens: number`
+
+              The number of input tokens used to create the 1 hour cache entry.
+
+            - `ephemeral_5m_input_tokens: number`
+
+              The number of input tokens used to create the 5 minute cache entry.
+
+          - `cache_creation_input_tokens: number`
+
+            The number of input tokens used to create the cache entry.
+
+          - `cache_read_input_tokens: number`
+
+            The number of input tokens read from the cache.
+
+          - `input_tokens: number`
+
+            The number of input tokens which were used.
+
+          - `output_tokens: number`
+
+            The number of output tokens which were used.
+
+          - `type: "compaction"`
+
+            Usage for a compaction iteration
+
+            - `"compaction"`
 
       - `output_tokens: number`
 
@@ -21126,31 +22276,9 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
                 - `"code_execution_20250825"`
 
-        - `BetaServerToolUseBlock = object { id, caller, input, 2 more }`
+        - `BetaServerToolUseBlock = object { id, input, name, 2 more }`
 
           - `id: string`
-
-          - `caller: BetaDirectCaller or BetaServerToolCaller`
-
-            Tool invocation directly from the model.
-
-            - `BetaDirectCaller = object { type }`
-
-              Tool invocation directly from the model.
-
-              - `type: "direct"`
-
-                - `"direct"`
-
-            - `BetaServerToolCaller = object { tool_id, type }`
-
-              Tool invocation generated by a server-side tool.
-
-              - `tool_id: string`
-
-              - `type: "code_execution_20250825"`
-
-                - `"code_execution_20250825"`
 
           - `input: map[unknown]`
 
@@ -21174,6 +22302,28 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
             - `"server_tool_use"`
 
+          - `caller: optional BetaDirectCaller or BetaServerToolCaller`
+
+            Tool invocation directly from the model.
+
+            - `BetaDirectCaller = object { type }`
+
+              Tool invocation directly from the model.
+
+              - `type: "direct"`
+
+                - `"direct"`
+
+            - `BetaServerToolCaller = object { tool_id, type }`
+
+              Tool invocation generated by a server-side tool.
+
+              - `tool_id: string`
+
+              - `type: "code_execution_20250825"`
+
+                - `"code_execution_20250825"`
+
         - `BetaWebSearchToolResultBlock = object { content, tool_use_id, type }`
 
           - `content: BetaWebSearchToolResultBlockContent`
@@ -21191,6 +22341,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
                 - `"too_many_requests"`
 
                 - `"query_too_long"`
+
+                - `"request_too_large"`
 
               - `type: "web_search_tool_result_error"`
 
@@ -21660,6 +22812,22 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
             - `"container_upload"`
 
+        - `BetaCompactionBlock = object { content, type }`
+
+          A compaction block returned when autocompact is triggered.
+
+          When content is None, it indicates the compaction failed to produce a valid
+          summary (e.g., malformed output from the model). Clients may round-trip
+          compaction blocks with null content; the server treats them as no-ops.
+
+          - `content: string`
+
+            Summary of compacted content, or null if compaction failed
+
+          - `type: "compaction"`
+
+            - `"compaction"`
+
       - `context_management: BetaContextManagementResponse`
 
         Context management response.
@@ -21708,11 +22876,15 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
         See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
 
-        - `UnionMember0 = "claude-opus-4-5-20251101" or "claude-opus-4-5" or "claude-3-7-sonnet-latest" or 17 more`
+        - `UnionMember0 = "claude-opus-4-6" or "claude-opus-4-5-20251101" or "claude-opus-4-5" or 18 more`
 
           The model that will complete your prompt.
 
           See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
+
+          - `"claude-opus-4-6"`
+
+            Most intelligent model for building agents and coding
 
           - `"claude-opus-4-5-20251101"`
 
@@ -21829,6 +23001,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
         - `"pause_turn"`
 
+        - `"compaction"`
+
         - `"refusal"`
 
         - `"model_context_window_exceeded"`
@@ -21879,9 +23053,99 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
           The number of input tokens read from the cache.
 
+        - `inference_geo: string`
+
+          The geographic region where inference was performed for this request.
+
         - `input_tokens: number`
 
           The number of input tokens which were used.
+
+        - `iterations: array of BetaMessageIterationUsage or BetaCompactionIterationUsage`
+
+          Per-iteration token usage breakdown.
+
+          Each entry represents one sampling iteration, with its own input/output token counts and cache statistics. This allows you to:
+
+          - Determine which iterations exceeded long context thresholds (>=200k tokens)
+          - Calculate the true context window size from the last iteration
+          - Understand token accumulation across server-side tool use loops
+
+          - `BetaMessageIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+            Token usage for a sampling iteration.
+
+            - `cache_creation: BetaCacheCreation`
+
+              Breakdown of cached tokens by TTL
+
+              - `ephemeral_1h_input_tokens: number`
+
+                The number of input tokens used to create the 1 hour cache entry.
+
+              - `ephemeral_5m_input_tokens: number`
+
+                The number of input tokens used to create the 5 minute cache entry.
+
+            - `cache_creation_input_tokens: number`
+
+              The number of input tokens used to create the cache entry.
+
+            - `cache_read_input_tokens: number`
+
+              The number of input tokens read from the cache.
+
+            - `input_tokens: number`
+
+              The number of input tokens which were used.
+
+            - `output_tokens: number`
+
+              The number of output tokens which were used.
+
+            - `type: "message"`
+
+              Usage for a sampling iteration
+
+              - `"message"`
+
+          - `BetaCompactionIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+            Token usage for a compaction iteration.
+
+            - `cache_creation: BetaCacheCreation`
+
+              Breakdown of cached tokens by TTL
+
+              - `ephemeral_1h_input_tokens: number`
+
+                The number of input tokens used to create the 1 hour cache entry.
+
+              - `ephemeral_5m_input_tokens: number`
+
+                The number of input tokens used to create the 5 minute cache entry.
+
+            - `cache_creation_input_tokens: number`
+
+              The number of input tokens used to create the cache entry.
+
+            - `cache_read_input_tokens: number`
+
+              The number of input tokens read from the cache.
+
+            - `input_tokens: number`
+
+              The number of input tokens which were used.
+
+            - `output_tokens: number`
+
+              The number of output tokens which were used.
+
+            - `type: "compaction"`
+
+              Usage for a compaction iteration
+
+              - `"compaction"`
 
         - `output_tokens: number`
 
@@ -22001,6 +23265,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
         - `"pause_turn"`
 
+        - `"compaction"`
+
         - `"refusal"`
 
         - `"model_context_window_exceeded"`
@@ -22035,6 +23301,92 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
         The cumulative number of input tokens which were used.
 
+      - `iterations: array of BetaMessageIterationUsage or BetaCompactionIterationUsage`
+
+        Per-iteration token usage breakdown.
+
+        Each entry represents one sampling iteration, with its own input/output token counts and cache statistics. This allows you to:
+
+        - Determine which iterations exceeded long context thresholds (>=200k tokens)
+        - Calculate the true context window size from the last iteration
+        - Understand token accumulation across server-side tool use loops
+
+        - `BetaMessageIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+          Token usage for a sampling iteration.
+
+          - `cache_creation: BetaCacheCreation`
+
+            Breakdown of cached tokens by TTL
+
+            - `ephemeral_1h_input_tokens: number`
+
+              The number of input tokens used to create the 1 hour cache entry.
+
+            - `ephemeral_5m_input_tokens: number`
+
+              The number of input tokens used to create the 5 minute cache entry.
+
+          - `cache_creation_input_tokens: number`
+
+            The number of input tokens used to create the cache entry.
+
+          - `cache_read_input_tokens: number`
+
+            The number of input tokens read from the cache.
+
+          - `input_tokens: number`
+
+            The number of input tokens which were used.
+
+          - `output_tokens: number`
+
+            The number of output tokens which were used.
+
+          - `type: "message"`
+
+            Usage for a sampling iteration
+
+            - `"message"`
+
+        - `BetaCompactionIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+          Token usage for a compaction iteration.
+
+          - `cache_creation: BetaCacheCreation`
+
+            Breakdown of cached tokens by TTL
+
+            - `ephemeral_1h_input_tokens: number`
+
+              The number of input tokens used to create the 1 hour cache entry.
+
+            - `ephemeral_5m_input_tokens: number`
+
+              The number of input tokens used to create the 5 minute cache entry.
+
+          - `cache_creation_input_tokens: number`
+
+            The number of input tokens used to create the cache entry.
+
+          - `cache_read_input_tokens: number`
+
+            The number of input tokens read from the cache.
+
+          - `input_tokens: number`
+
+            The number of input tokens which were used.
+
+          - `output_tokens: number`
+
+            The number of output tokens which were used.
+
+          - `type: "compaction"`
+
+            Usage for a compaction iteration
+
+            - `"compaction"`
+
       - `output_tokens: number`
 
         The cumulative number of output tokens which were used.
@@ -22059,7 +23411,7 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
   - `BetaRawContentBlockStartEvent = object { content_block, index, type }`
 
-    - `content_block: BetaTextBlock or BetaThinkingBlock or BetaRedactedThinkingBlock or 11 more`
+    - `content_block: BetaTextBlock or BetaThinkingBlock or BetaRedactedThinkingBlock or 12 more`
 
       Response model for a file uploaded to the container.
 
@@ -22215,31 +23567,9 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
               - `"code_execution_20250825"`
 
-      - `BetaServerToolUseBlock = object { id, caller, input, 2 more }`
+      - `BetaServerToolUseBlock = object { id, input, name, 2 more }`
 
         - `id: string`
-
-        - `caller: BetaDirectCaller or BetaServerToolCaller`
-
-          Tool invocation directly from the model.
-
-          - `BetaDirectCaller = object { type }`
-
-            Tool invocation directly from the model.
-
-            - `type: "direct"`
-
-              - `"direct"`
-
-          - `BetaServerToolCaller = object { tool_id, type }`
-
-            Tool invocation generated by a server-side tool.
-
-            - `tool_id: string`
-
-            - `type: "code_execution_20250825"`
-
-              - `"code_execution_20250825"`
 
         - `input: map[unknown]`
 
@@ -22263,6 +23593,28 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
           - `"server_tool_use"`
 
+        - `caller: optional BetaDirectCaller or BetaServerToolCaller`
+
+          Tool invocation directly from the model.
+
+          - `BetaDirectCaller = object { type }`
+
+            Tool invocation directly from the model.
+
+            - `type: "direct"`
+
+              - `"direct"`
+
+          - `BetaServerToolCaller = object { tool_id, type }`
+
+            Tool invocation generated by a server-side tool.
+
+            - `tool_id: string`
+
+            - `type: "code_execution_20250825"`
+
+              - `"code_execution_20250825"`
+
       - `BetaWebSearchToolResultBlock = object { content, tool_use_id, type }`
 
         - `content: BetaWebSearchToolResultBlockContent`
@@ -22280,6 +23632,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
               - `"too_many_requests"`
 
               - `"query_too_long"`
+
+              - `"request_too_large"`
 
             - `type: "web_search_tool_result_error"`
 
@@ -22749,6 +24103,22 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
           - `"container_upload"`
 
+      - `BetaCompactionBlock = object { content, type }`
+
+        A compaction block returned when autocompact is triggered.
+
+        When content is None, it indicates the compaction failed to produce a valid
+        summary (e.g., malformed output from the model). Clients may round-trip
+        compaction blocks with null content; the server treats them as no-ops.
+
+        - `content: string`
+
+          Summary of compacted content, or null if compaction failed
+
+        - `type: "compaction"`
+
+          - `"compaction"`
+
     - `index: number`
 
     - `type: "content_block_start"`
@@ -22884,6 +24254,14 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
         - `type: "signature_delta"`
 
           - `"signature_delta"`
+
+      - `BetaCompactionContentBlockDelta = object { content, type }`
+
+        - `content: string`
+
+        - `type: "compaction_delta"`
+
+          - `"compaction_delta"`
 
     - `index: number`
 
@@ -23548,31 +24926,9 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
 ### Beta Server Tool Use Block
 
-- `BetaServerToolUseBlock = object { id, caller, input, 2 more }`
+- `BetaServerToolUseBlock = object { id, input, name, 2 more }`
 
   - `id: string`
-
-  - `caller: BetaDirectCaller or BetaServerToolCaller`
-
-    Tool invocation directly from the model.
-
-    - `BetaDirectCaller = object { type }`
-
-      Tool invocation directly from the model.
-
-      - `type: "direct"`
-
-        - `"direct"`
-
-    - `BetaServerToolCaller = object { tool_id, type }`
-
-      Tool invocation generated by a server-side tool.
-
-      - `tool_id: string`
-
-      - `type: "code_execution_20250825"`
-
-        - `"code_execution_20250825"`
 
   - `input: map[unknown]`
 
@@ -23595,6 +24951,28 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
   - `type: "server_tool_use"`
 
     - `"server_tool_use"`
+
+  - `caller: optional BetaDirectCaller or BetaServerToolCaller`
+
+    Tool invocation directly from the model.
+
+    - `BetaDirectCaller = object { type }`
+
+      Tool invocation directly from the model.
+
+      - `type: "direct"`
+
+        - `"direct"`
+
+    - `BetaServerToolCaller = object { tool_id, type }`
+
+      Tool invocation generated by a server-side tool.
+
+      - `tool_id: string`
+
+      - `type: "code_execution_20250825"`
+
+        - `"code_execution_20250825"`
 
 ### Beta Server Tool Use Block Param
 
@@ -23725,7 +25103,7 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
 ### Beta Stop Reason
 
-- `BetaStopReason = "end_turn" or "max_tokens" or "stop_sequence" or 4 more`
+- `BetaStopReason = "end_turn" or "max_tokens" or "stop_sequence" or 5 more`
 
   - `"end_turn"`
 
@@ -23736,6 +25114,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
   - `"tool_use"`
 
   - `"pause_turn"`
+
+  - `"compaction"`
 
   - `"refusal"`
 
@@ -24493,6 +25873,14 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     - `"thinking"`
 
+### Beta Thinking Config Adaptive
+
+- `BetaThinkingConfigAdaptive = object { type }`
+
+  - `type: "adaptive"`
+
+    - `"adaptive"`
+
 ### Beta Thinking Config Disabled
 
 - `BetaThinkingConfigDisabled = object { type }`
@@ -24519,7 +25907,7 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
 ### Beta Thinking Config Param
 
-- `BetaThinkingConfigParam = BetaThinkingConfigEnabled or BetaThinkingConfigDisabled`
+- `BetaThinkingConfigParam = BetaThinkingConfigEnabled or BetaThinkingConfigDisabled or BetaThinkingConfigAdaptive`
 
   Configuration for enabling Claude's extended thinking.
 
@@ -24547,6 +25935,12 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
       - `"disabled"`
 
+  - `BetaThinkingConfigAdaptive = object { type }`
+
+    - `type: "adaptive"`
+
+      - `"adaptive"`
+
 ### Beta Thinking Delta
 
 - `BetaThinkingDelta = object { thinking, type }`
@@ -24569,7 +25963,7 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
 ### Beta Tool
 
-- `BetaTool = object { input_schema, name, allowed_callers, 6 more }`
+- `BetaTool = object { input_schema, name, allowed_callers, 7 more }`
 
   - `input_schema: object { type, properties, required }`
 
@@ -24630,9 +26024,15 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     Tool descriptions should be as detailed as possible. The more information that the model has about what the tool is and how to use it, the better it will perform. You can use natural language descriptions to reinforce important aspects of the tool input JSON schema.
 
+  - `eager_input_streaming: optional boolean`
+
+    Enable eager input streaming for this tool. When true, tool input parameters will be streamed incrementally as they are generated, and types will be inferred on-the-fly rather than buffering the full JSON output. When false, streaming is disabled for this tool even if the fine-grained-tool-streaming beta is active. When null (default), uses the default behavior based on beta headers.
+
   - `input_examples: optional array of map[unknown]`
 
   - `strict: optional boolean`
+
+    When true, guarantees schema validation on tool names and inputs
 
   - `type: optional "custom"`
 
@@ -24691,6 +26091,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
   - `strict: optional boolean`
 
+    When true, guarantees schema validation on tool names and inputs
+
 ### Beta Tool Bash 20250124
 
 - `BetaToolBash20250124 = object { name, type, allowed_callers, 4 more }`
@@ -24743,6 +26145,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
   - `input_examples: optional array of map[unknown]`
 
   - `strict: optional boolean`
+
+    When true, guarantees schema validation on tool names and inputs
 
 ### Beta Tool Choice
 
@@ -24931,6 +26335,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
   - `strict: optional boolean`
 
+    When true, guarantees schema validation on tool names and inputs
+
 ### Beta Tool Computer Use 20250124
 
 - `BetaToolComputerUse20250124 = object { display_height_px, display_width_px, name, 7 more }`
@@ -24995,6 +26401,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
   - `input_examples: optional array of map[unknown]`
 
   - `strict: optional boolean`
+
+    When true, guarantees schema validation on tool names and inputs
 
 ### Beta Tool Computer Use 20251124
 
@@ -25064,6 +26472,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
   - `input_examples: optional array of map[unknown]`
 
   - `strict: optional boolean`
+
+    When true, guarantees schema validation on tool names and inputs
 
 ### Beta Tool Reference Block
 
@@ -25834,6 +27244,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
   - `strict: optional boolean`
 
+    When true, guarantees schema validation on tool names and inputs
+
 ### Beta Tool Search Tool Regex 20251119
 
 - `BetaToolSearchToolRegex20251119 = object { name, type, allowed_callers, 3 more }`
@@ -25886,6 +27298,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
     If true, tool will not be included in initial system prompt. Only loaded when returned via tool_reference from tool search.
 
   - `strict: optional boolean`
+
+    When true, guarantees schema validation on tool names and inputs
 
 ### Beta Tool Search Tool Result Block
 
@@ -26165,6 +27579,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
   - `strict: optional boolean`
 
+    When true, guarantees schema validation on tool names and inputs
+
 ### Beta Tool Text Editor 20250124
 
 - `BetaToolTextEditor20250124 = object { name, type, allowed_callers, 4 more }`
@@ -26218,6 +27634,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
   - `strict: optional boolean`
 
+    When true, guarantees schema validation on tool names and inputs
+
 ### Beta Tool Text Editor 20250429
 
 - `BetaToolTextEditor20250429 = object { name, type, allowed_callers, 4 more }`
@@ -26270,6 +27688,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
   - `input_examples: optional array of map[unknown]`
 
   - `strict: optional boolean`
+
+    When true, guarantees schema validation on tool names and inputs
 
 ### Beta Tool Text Editor 20250728
 
@@ -26328,6 +27748,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
   - `strict: optional boolean`
 
+    When true, guarantees schema validation on tool names and inputs
+
 ### Beta Tool Union
 
 - `BetaToolUnion = BetaTool or BetaToolBash20241022 or BetaToolBash20250124 or 15 more`
@@ -26337,7 +27759,7 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
   Allows configuring enabled status and defer_loading for all tools
   from an MCP server, with optional per-tool overrides.
 
-  - `BetaTool = object { input_schema, name, allowed_callers, 6 more }`
+  - `BetaTool = object { input_schema, name, allowed_callers, 7 more }`
 
     - `input_schema: object { type, properties, required }`
 
@@ -26398,9 +27820,15 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
       Tool descriptions should be as detailed as possible. The more information that the model has about what the tool is and how to use it, the better it will perform. You can use natural language descriptions to reinforce important aspects of the tool input JSON schema.
 
+    - `eager_input_streaming: optional boolean`
+
+      Enable eager input streaming for this tool. When true, tool input parameters will be streamed incrementally as they are generated, and types will be inferred on-the-fly rather than buffering the full JSON output. When false, streaming is disabled for this tool even if the fine-grained-tool-streaming beta is active. When null (default), uses the default behavior based on beta headers.
+
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
     - `type: optional "custom"`
 
@@ -26457,6 +27885,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolBash20250124 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "bash"`
@@ -26508,6 +27938,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaCodeExecutionTool20250522 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "code_execution"`
@@ -26557,6 +27989,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaCodeExecutionTool20250825 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "code_execution"`
@@ -26605,6 +28039,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
       If true, tool will not be included in initial system prompt. Only loaded when returned via tool_reference from tool search.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolComputerUse20241022 = object { display_height_px, display_width_px, name, 7 more }`
 
@@ -26669,6 +28105,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaMemoryTool20250818 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "memory"`
@@ -26719,6 +28157,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolComputerUse20250124 = object { display_height_px, display_width_px, name, 7 more }`
 
@@ -26783,6 +28223,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolTextEditor20241022 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "str_replace_editor"`
@@ -26833,6 +28275,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolComputerUse20251124 = object { display_height_px, display_width_px, name, 8 more }`
 
@@ -26901,6 +28345,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolTextEditor20250124 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "str_replace_editor"`
@@ -26952,6 +28398,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolTextEditor20250429 = object { name, type, allowed_callers, 4 more }`
 
     - `name: "str_replace_based_edit_tool"`
@@ -27002,6 +28450,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
     - `input_examples: optional array of map[unknown]`
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaToolTextEditor20250728 = object { name, type, allowed_callers, 5 more }`
 
@@ -27057,6 +28507,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
       Maximum number of characters to display when viewing a file. If not specified, defaults to displaying the full file.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaWebSearchTool20250305 = object { name, type, allowed_callers, 7 more }`
 
@@ -27118,6 +28570,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
       Maximum number of times the tool can be used in the API request.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
     - `user_location: optional object { type, city, country, 2 more }`
 
@@ -27214,6 +28668,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolSearchToolBm25_20251119 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "tool_search_tool_bm25"`
@@ -27265,6 +28721,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     - `strict: optional boolean`
 
+      When true, guarantees schema validation on tool names and inputs
+
   - `BetaToolSearchToolRegex20251119 = object { name, type, allowed_callers, 3 more }`
 
     - `name: "tool_search_tool_regex"`
@@ -27315,6 +28773,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
       If true, tool will not be included in initial system prompt. Only loaded when returned via tool_reference from tool search.
 
     - `strict: optional boolean`
+
+      When true, guarantees schema validation on tool names and inputs
 
   - `BetaMCPToolset = object { mcp_server_name, type, cache_control, 2 more }`
 
@@ -27507,7 +28967,7 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
 ### Beta Usage
 
-- `BetaUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 4 more }`
+- `BetaUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 6 more }`
 
   - `cache_creation: BetaCacheCreation`
 
@@ -27529,9 +28989,99 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     The number of input tokens read from the cache.
 
+  - `inference_geo: string`
+
+    The geographic region where inference was performed for this request.
+
   - `input_tokens: number`
 
     The number of input tokens which were used.
+
+  - `iterations: array of BetaMessageIterationUsage or BetaCompactionIterationUsage`
+
+    Per-iteration token usage breakdown.
+
+    Each entry represents one sampling iteration, with its own input/output token counts and cache statistics. This allows you to:
+
+    - Determine which iterations exceeded long context thresholds (>=200k tokens)
+    - Calculate the true context window size from the last iteration
+    - Understand token accumulation across server-side tool use loops
+
+    - `BetaMessageIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+      Token usage for a sampling iteration.
+
+      - `cache_creation: BetaCacheCreation`
+
+        Breakdown of cached tokens by TTL
+
+        - `ephemeral_1h_input_tokens: number`
+
+          The number of input tokens used to create the 1 hour cache entry.
+
+        - `ephemeral_5m_input_tokens: number`
+
+          The number of input tokens used to create the 5 minute cache entry.
+
+      - `cache_creation_input_tokens: number`
+
+        The number of input tokens used to create the cache entry.
+
+      - `cache_read_input_tokens: number`
+
+        The number of input tokens read from the cache.
+
+      - `input_tokens: number`
+
+        The number of input tokens which were used.
+
+      - `output_tokens: number`
+
+        The number of output tokens which were used.
+
+      - `type: "message"`
+
+        Usage for a sampling iteration
+
+        - `"message"`
+
+    - `BetaCompactionIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+      Token usage for a compaction iteration.
+
+      - `cache_creation: BetaCacheCreation`
+
+        Breakdown of cached tokens by TTL
+
+        - `ephemeral_1h_input_tokens: number`
+
+          The number of input tokens used to create the 1 hour cache entry.
+
+        - `ephemeral_5m_input_tokens: number`
+
+          The number of input tokens used to create the 5 minute cache entry.
+
+      - `cache_creation_input_tokens: number`
+
+        The number of input tokens used to create the cache entry.
+
+      - `cache_read_input_tokens: number`
+
+        The number of input tokens read from the cache.
+
+      - `input_tokens: number`
+
+        The number of input tokens which were used.
+
+      - `output_tokens: number`
+
+        The number of output tokens which were used.
+
+      - `type: "compaction"`
+
+        Usage for a compaction iteration
+
+        - `"compaction"`
 
   - `output_tokens: number`
 
@@ -27974,6 +29524,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
     Maximum number of times the tool can be used in the API request.
 
   - `strict: optional boolean`
+
+    When true, guarantees schema validation on tool names and inputs
 
 ### Beta Web Fetch Tool Result Block
 
@@ -28576,6 +30128,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
   - `strict: optional boolean`
 
+    When true, guarantees schema validation on tool names and inputs
+
   - `user_location: optional object { type, city, country, 2 more }`
 
     Parameters for the user's location. Used to provide more relevant search results.
@@ -28616,6 +30170,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     - `"query_too_long"`
 
+    - `"request_too_large"`
+
   - `type: "web_search_tool_result_error"`
 
     - `"web_search_tool_result_error"`
@@ -28639,6 +30195,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
         - `"too_many_requests"`
 
         - `"query_too_long"`
+
+        - `"request_too_large"`
 
       - `type: "web_search_tool_result_error"`
 
@@ -28681,6 +30239,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
       - `"too_many_requests"`
 
       - `"query_too_long"`
+
+      - `"request_too_large"`
 
     - `type: "web_search_tool_result_error"`
 
@@ -28733,6 +30293,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
         - `"too_many_requests"`
 
         - `"query_too_long"`
+
+        - `"request_too_large"`
 
       - `type: "web_search_tool_result_error"`
 
@@ -28799,6 +30361,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
       - `"query_too_long"`
 
+      - `"request_too_large"`
+
     - `type: "web_search_tool_result_error"`
 
       - `"web_search_tool_result_error"`
@@ -28819,13 +30383,15 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
 
     - `"query_too_long"`
 
+    - `"request_too_large"`
+
   - `type: "web_search_tool_result_error"`
 
     - `"web_search_tool_result_error"`
 
 ### Beta Web Search Tool Result Error Code
 
-- `BetaWebSearchToolResultErrorCode = "invalid_tool_input" or "unavailable" or "max_uses_exceeded" or 2 more`
+- `BetaWebSearchToolResultErrorCode = "invalid_tool_input" or "unavailable" or "max_uses_exceeded" or 3 more`
 
   - `"invalid_tool_input"`
 
@@ -28836,6 +30402,8 @@ curl https://api.anthropic.com/v1/messages/count_tokens \
   - `"too_many_requests"`
 
   - `"query_too_long"`
+
+  - `"request_too_large"`
 
 # Batches
 
@@ -28909,7 +30477,7 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
     Must be unique for each request within the Message Batch.
 
-  - `params: object { max_tokens, messages, model, 16 more }`
+  - `params: object { max_tokens, messages, model, 17 more }`
 
     Messages API creation parameters for the individual request.
 
@@ -30424,6 +31992,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
                   - `"query_too_long"`
 
+                  - `"request_too_large"`
+
                 - `type: "web_search_tool_result_error"`
 
                   - `"web_search_tool_result_error"`
@@ -31345,6 +32915,47 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
                 - `"1h"`
 
+          - `BetaCompactionBlockParam = object { content, type, cache_control }`
+
+            A compaction block containing summary of previous context.
+
+            Users should round-trip these blocks from responses to subsequent requests
+            to maintain context across compaction boundaries.
+
+            When content is None, the block represents a failed compaction. The server
+            treats these as no-ops. Empty string content is not allowed.
+
+            - `content: string`
+
+              Summary of previously compacted content, or null if compaction failed
+
+            - `type: "compaction"`
+
+              - `"compaction"`
+
+            - `cache_control: optional BetaCacheControlEphemeral`
+
+              Create a cache control breakpoint at this content block.
+
+              - `type: "ephemeral"`
+
+                - `"ephemeral"`
+
+              - `ttl: optional "5m" or "1h"`
+
+                The time-to-live for the cache control breakpoint.
+
+                This may be one the following values:
+
+                - `5m`: 5 minutes
+                - `1h`: 1 hour
+
+                Defaults to `5m`.
+
+                - `"5m"`
+
+                - `"1h"`
+
       - `role: "user" or "assistant"`
 
         - `"user"`
@@ -31357,11 +32968,15 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
       See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
 
-      - `UnionMember0 = "claude-opus-4-5-20251101" or "claude-opus-4-5" or "claude-3-7-sonnet-latest" or 17 more`
+      - `UnionMember0 = "claude-opus-4-6" or "claude-opus-4-5-20251101" or "claude-opus-4-5" or 18 more`
 
         The model that will complete your prompt.
 
         See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
+
+        - `"claude-opus-4-6"`
+
+          Most intelligent model for building agents and coding
 
         - `"claude-opus-4-5-20251101"`
 
@@ -31485,7 +33100,7 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
       This allows you to control how Claude manages context across multiple requests, such as whether to clear function results or not.
 
-      - `edits: optional array of BetaClearToolUses20250919Edit or BetaClearThinking20251015Edit`
+      - `edits: optional array of BetaClearToolUses20250919Edit or BetaClearThinking20251015Edit or BetaCompact20260112Edit`
 
         List of context management edits to apply
 
@@ -31575,6 +33190,36 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
               - `"all"`
 
+        - `BetaCompact20260112Edit = object { type, instructions, pause_after_compaction, trigger }`
+
+          Automatically compact older context when reaching the configured trigger threshold.
+
+          - `type: "compact_20260112"`
+
+            - `"compact_20260112"`
+
+          - `instructions: optional string`
+
+            Additional instructions for summarization.
+
+          - `pause_after_compaction: optional boolean`
+
+            Whether to pause after compaction and return the compaction block to the user.
+
+          - `trigger: optional BetaInputTokensTrigger`
+
+            When to trigger compaction. Defaults to 150000 input tokens.
+
+            - `type: "input_tokens"`
+
+              - `"input_tokens"`
+
+            - `value: number`
+
+    - `inference_geo: optional string`
+
+      Specifies the geographic region for inference processing. If not specified, the workspace's `default_inference_geo` is used.
+
     - `mcp_servers: optional array of BetaRequestMCPServerURLDefinition`
 
       MCP servers to be utilized in this request
@@ -31607,9 +33252,9 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
     - `output_config: optional BetaOutputConfig`
 
-      Configuration options for the model's output. Controls aspects like how much effort the model puts into its response.
+      Configuration options for the model's output, such as the output format.
 
-      - `effort: optional "low" or "medium" or "high"`
+      - `effort: optional "low" or "medium" or "high" or "max"`
 
         All possible effort levels.
 
@@ -31619,9 +33264,25 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
         - `"high"`
 
+        - `"max"`
+
+      - `format: optional BetaJSONOutputFormat`
+
+        A schema to specify Claude's output format in responses. See [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+
+        - `schema: map[unknown]`
+
+          The JSON schema of the format
+
+        - `type: "json_schema"`
+
+          - `"json_schema"`
+
     - `output_format: optional BetaJSONOutputFormat`
 
-      A schema to specify Claude's output format in responses.
+      Deprecated: Use `output_config.format` instead. See [structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs)
+
+      A schema to specify Claude's output format in responses. This parameter will be removed in a future release.
 
       - `schema: map[unknown]`
 
@@ -31812,6 +33473,12 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
           - `"disabled"`
 
+      - `BetaThinkingConfigAdaptive = object { type }`
+
+        - `type: "adaptive"`
+
+          - `"adaptive"`
+
     - `tool_choice: optional BetaToolChoice`
 
       How the model should use the provided tools. The model can use a specific tool, any available tool, decide by itself, or not use tools at all.
@@ -31934,7 +33601,7 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
       See our [guide](https://docs.claude.com/en/docs/tool-use) for more details.
 
-      - `BetaTool = object { input_schema, name, allowed_callers, 6 more }`
+      - `BetaTool = object { input_schema, name, allowed_callers, 7 more }`
 
         - `input_schema: object { type, properties, required }`
 
@@ -31995,9 +33662,15 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
           Tool descriptions should be as detailed as possible. The more information that the model has about what the tool is and how to use it, the better it will perform. You can use natural language descriptions to reinforce important aspects of the tool input JSON schema.
 
+        - `eager_input_streaming: optional boolean`
+
+          Enable eager input streaming for this tool. When true, tool input parameters will be streamed incrementally as they are generated, and types will be inferred on-the-fly rather than buffering the full JSON output. When false, streaming is disabled for this tool even if the fine-grained-tool-streaming beta is active. When null (default), uses the default behavior based on beta headers.
+
         - `input_examples: optional array of map[unknown]`
 
         - `strict: optional boolean`
+
+          When true, guarantees schema validation on tool names and inputs
 
         - `type: optional "custom"`
 
@@ -32054,6 +33727,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
         - `strict: optional boolean`
 
+          When true, guarantees schema validation on tool names and inputs
+
       - `BetaToolBash20250124 = object { name, type, allowed_callers, 4 more }`
 
         - `name: "bash"`
@@ -32105,6 +33780,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
         - `strict: optional boolean`
 
+          When true, guarantees schema validation on tool names and inputs
+
       - `BetaCodeExecutionTool20250522 = object { name, type, allowed_callers, 3 more }`
 
         - `name: "code_execution"`
@@ -32154,6 +33831,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
         - `strict: optional boolean`
 
+          When true, guarantees schema validation on tool names and inputs
+
       - `BetaCodeExecutionTool20250825 = object { name, type, allowed_callers, 3 more }`
 
         - `name: "code_execution"`
@@ -32202,6 +33881,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
           If true, tool will not be included in initial system prompt. Only loaded when returned via tool_reference from tool search.
 
         - `strict: optional boolean`
+
+          When true, guarantees schema validation on tool names and inputs
 
       - `BetaToolComputerUse20241022 = object { display_height_px, display_width_px, name, 7 more }`
 
@@ -32266,6 +33947,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
         - `strict: optional boolean`
 
+          When true, guarantees schema validation on tool names and inputs
+
       - `BetaMemoryTool20250818 = object { name, type, allowed_callers, 4 more }`
 
         - `name: "memory"`
@@ -32316,6 +33999,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
         - `input_examples: optional array of map[unknown]`
 
         - `strict: optional boolean`
+
+          When true, guarantees schema validation on tool names and inputs
 
       - `BetaToolComputerUse20250124 = object { display_height_px, display_width_px, name, 7 more }`
 
@@ -32380,6 +34065,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
         - `strict: optional boolean`
 
+          When true, guarantees schema validation on tool names and inputs
+
       - `BetaToolTextEditor20241022 = object { name, type, allowed_callers, 4 more }`
 
         - `name: "str_replace_editor"`
@@ -32430,6 +34117,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
         - `input_examples: optional array of map[unknown]`
 
         - `strict: optional boolean`
+
+          When true, guarantees schema validation on tool names and inputs
 
       - `BetaToolComputerUse20251124 = object { display_height_px, display_width_px, name, 8 more }`
 
@@ -32498,6 +34187,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
         - `strict: optional boolean`
 
+          When true, guarantees schema validation on tool names and inputs
+
       - `BetaToolTextEditor20250124 = object { name, type, allowed_callers, 4 more }`
 
         - `name: "str_replace_editor"`
@@ -32549,6 +34240,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
         - `strict: optional boolean`
 
+          When true, guarantees schema validation on tool names and inputs
+
       - `BetaToolTextEditor20250429 = object { name, type, allowed_callers, 4 more }`
 
         - `name: "str_replace_based_edit_tool"`
@@ -32599,6 +34292,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
         - `input_examples: optional array of map[unknown]`
 
         - `strict: optional boolean`
+
+          When true, guarantees schema validation on tool names and inputs
 
       - `BetaToolTextEditor20250728 = object { name, type, allowed_callers, 5 more }`
 
@@ -32654,6 +34349,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
           Maximum number of characters to display when viewing a file. If not specified, defaults to displaying the full file.
 
         - `strict: optional boolean`
+
+          When true, guarantees schema validation on tool names and inputs
 
       - `BetaWebSearchTool20250305 = object { name, type, allowed_callers, 7 more }`
 
@@ -32715,6 +34412,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
           Maximum number of times the tool can be used in the API request.
 
         - `strict: optional boolean`
+
+          When true, guarantees schema validation on tool names and inputs
 
         - `user_location: optional object { type, city, country, 2 more }`
 
@@ -32811,6 +34510,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
         - `strict: optional boolean`
 
+          When true, guarantees schema validation on tool names and inputs
+
       - `BetaToolSearchToolBm25_20251119 = object { name, type, allowed_callers, 3 more }`
 
         - `name: "tool_search_tool_bm25"`
@@ -32862,6 +34563,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
         - `strict: optional boolean`
 
+          When true, guarantees schema validation on tool names and inputs
+
       - `BetaToolSearchToolRegex20251119 = object { name, type, allowed_callers, 3 more }`
 
         - `name: "tool_search_tool_regex"`
@@ -32912,6 +34615,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
           If true, tool will not be included in initial system prompt. Only loaded when returned via tool_reference from tool search.
 
         - `strict: optional boolean`
+
+          When true, guarantees schema validation on tool names and inputs
 
       - `BetaMCPToolset = object { mcp_server_name, type, cache_control, 2 more }`
 
@@ -33093,7 +34798,7 @@ curl https://api.anthropic.com/v1/messages/batches \
                     "role": "user"
                   }
                 ],
-                "model": "claude-sonnet-4-5-20250929"
+                "model": "claude-opus-4-6"
               }
             }
           ]
@@ -34003,31 +35708,9 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
                   - `"code_execution_20250825"`
 
-          - `BetaServerToolUseBlock = object { id, caller, input, 2 more }`
+          - `BetaServerToolUseBlock = object { id, input, name, 2 more }`
 
             - `id: string`
-
-            - `caller: BetaDirectCaller or BetaServerToolCaller`
-
-              Tool invocation directly from the model.
-
-              - `BetaDirectCaller = object { type }`
-
-                Tool invocation directly from the model.
-
-                - `type: "direct"`
-
-                  - `"direct"`
-
-              - `BetaServerToolCaller = object { tool_id, type }`
-
-                Tool invocation generated by a server-side tool.
-
-                - `tool_id: string`
-
-                - `type: "code_execution_20250825"`
-
-                  - `"code_execution_20250825"`
 
             - `input: map[unknown]`
 
@@ -34051,6 +35734,28 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
               - `"server_tool_use"`
 
+            - `caller: optional BetaDirectCaller or BetaServerToolCaller`
+
+              Tool invocation directly from the model.
+
+              - `BetaDirectCaller = object { type }`
+
+                Tool invocation directly from the model.
+
+                - `type: "direct"`
+
+                  - `"direct"`
+
+              - `BetaServerToolCaller = object { tool_id, type }`
+
+                Tool invocation generated by a server-side tool.
+
+                - `tool_id: string`
+
+                - `type: "code_execution_20250825"`
+
+                  - `"code_execution_20250825"`
+
           - `BetaWebSearchToolResultBlock = object { content, tool_use_id, type }`
 
             - `content: BetaWebSearchToolResultBlockContent`
@@ -34068,6 +35773,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
                   - `"too_many_requests"`
 
                   - `"query_too_long"`
+
+                  - `"request_too_large"`
 
                 - `type: "web_search_tool_result_error"`
 
@@ -34537,6 +36244,22 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
               - `"container_upload"`
 
+          - `BetaCompactionBlock = object { content, type }`
+
+            A compaction block returned when autocompact is triggered.
+
+            When content is None, it indicates the compaction failed to produce a valid
+            summary (e.g., malformed output from the model). Clients may round-trip
+            compaction blocks with null content; the server treats them as no-ops.
+
+            - `content: string`
+
+              Summary of compacted content, or null if compaction failed
+
+            - `type: "compaction"`
+
+              - `"compaction"`
+
         - `context_management: BetaContextManagementResponse`
 
           Context management response.
@@ -34585,11 +36308,15 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
           See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
 
-          - `UnionMember0 = "claude-opus-4-5-20251101" or "claude-opus-4-5" or "claude-3-7-sonnet-latest" or 17 more`
+          - `UnionMember0 = "claude-opus-4-6" or "claude-opus-4-5-20251101" or "claude-opus-4-5" or 18 more`
 
             The model that will complete your prompt.
 
             See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
+
+            - `"claude-opus-4-6"`
+
+              Most intelligent model for building agents and coding
 
             - `"claude-opus-4-5-20251101"`
 
@@ -34706,6 +36433,8 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
           - `"pause_turn"`
 
+          - `"compaction"`
+
           - `"refusal"`
 
           - `"model_context_window_exceeded"`
@@ -34756,9 +36485,99 @@ Learn more about the Message Batches API in our [user guide](https://docs.claude
 
             The number of input tokens read from the cache.
 
+          - `inference_geo: string`
+
+            The geographic region where inference was performed for this request.
+
           - `input_tokens: number`
 
             The number of input tokens which were used.
+
+          - `iterations: array of BetaMessageIterationUsage or BetaCompactionIterationUsage`
+
+            Per-iteration token usage breakdown.
+
+            Each entry represents one sampling iteration, with its own input/output token counts and cache statistics. This allows you to:
+
+            - Determine which iterations exceeded long context thresholds (>=200k tokens)
+            - Calculate the true context window size from the last iteration
+            - Understand token accumulation across server-side tool use loops
+
+            - `BetaMessageIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+              Token usage for a sampling iteration.
+
+              - `cache_creation: BetaCacheCreation`
+
+                Breakdown of cached tokens by TTL
+
+                - `ephemeral_1h_input_tokens: number`
+
+                  The number of input tokens used to create the 1 hour cache entry.
+
+                - `ephemeral_5m_input_tokens: number`
+
+                  The number of input tokens used to create the 5 minute cache entry.
+
+              - `cache_creation_input_tokens: number`
+
+                The number of input tokens used to create the cache entry.
+
+              - `cache_read_input_tokens: number`
+
+                The number of input tokens read from the cache.
+
+              - `input_tokens: number`
+
+                The number of input tokens which were used.
+
+              - `output_tokens: number`
+
+                The number of output tokens which were used.
+
+              - `type: "message"`
+
+                Usage for a sampling iteration
+
+                - `"message"`
+
+            - `BetaCompactionIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+              Token usage for a compaction iteration.
+
+              - `cache_creation: BetaCacheCreation`
+
+                Breakdown of cached tokens by TTL
+
+                - `ephemeral_1h_input_tokens: number`
+
+                  The number of input tokens used to create the 1 hour cache entry.
+
+                - `ephemeral_5m_input_tokens: number`
+
+                  The number of input tokens used to create the 5 minute cache entry.
+
+              - `cache_creation_input_tokens: number`
+
+                The number of input tokens used to create the cache entry.
+
+              - `cache_read_input_tokens: number`
+
+                The number of input tokens read from the cache.
+
+              - `input_tokens: number`
+
+                The number of input tokens which were used.
+
+              - `output_tokens: number`
+
+                The number of output tokens which were used.
+
+              - `type: "compaction"`
+
+                Usage for a compaction iteration
+
+                - `"compaction"`
 
           - `output_tokens: number`
 
@@ -35354,31 +37173,9 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
                   - `"code_execution_20250825"`
 
-          - `BetaServerToolUseBlock = object { id, caller, input, 2 more }`
+          - `BetaServerToolUseBlock = object { id, input, name, 2 more }`
 
             - `id: string`
-
-            - `caller: BetaDirectCaller or BetaServerToolCaller`
-
-              Tool invocation directly from the model.
-
-              - `BetaDirectCaller = object { type }`
-
-                Tool invocation directly from the model.
-
-                - `type: "direct"`
-
-                  - `"direct"`
-
-              - `BetaServerToolCaller = object { tool_id, type }`
-
-                Tool invocation generated by a server-side tool.
-
-                - `tool_id: string`
-
-                - `type: "code_execution_20250825"`
-
-                  - `"code_execution_20250825"`
 
             - `input: map[unknown]`
 
@@ -35402,6 +37199,28 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
               - `"server_tool_use"`
 
+            - `caller: optional BetaDirectCaller or BetaServerToolCaller`
+
+              Tool invocation directly from the model.
+
+              - `BetaDirectCaller = object { type }`
+
+                Tool invocation directly from the model.
+
+                - `type: "direct"`
+
+                  - `"direct"`
+
+              - `BetaServerToolCaller = object { tool_id, type }`
+
+                Tool invocation generated by a server-side tool.
+
+                - `tool_id: string`
+
+                - `type: "code_execution_20250825"`
+
+                  - `"code_execution_20250825"`
+
           - `BetaWebSearchToolResultBlock = object { content, tool_use_id, type }`
 
             - `content: BetaWebSearchToolResultBlockContent`
@@ -35419,6 +37238,8 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
                   - `"too_many_requests"`
 
                   - `"query_too_long"`
+
+                  - `"request_too_large"`
 
                 - `type: "web_search_tool_result_error"`
 
@@ -35888,6 +37709,22 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
               - `"container_upload"`
 
+          - `BetaCompactionBlock = object { content, type }`
+
+            A compaction block returned when autocompact is triggered.
+
+            When content is None, it indicates the compaction failed to produce a valid
+            summary (e.g., malformed output from the model). Clients may round-trip
+            compaction blocks with null content; the server treats them as no-ops.
+
+            - `content: string`
+
+              Summary of compacted content, or null if compaction failed
+
+            - `type: "compaction"`
+
+              - `"compaction"`
+
         - `context_management: BetaContextManagementResponse`
 
           Context management response.
@@ -35936,11 +37773,15 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
           See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
 
-          - `UnionMember0 = "claude-opus-4-5-20251101" or "claude-opus-4-5" or "claude-3-7-sonnet-latest" or 17 more`
+          - `UnionMember0 = "claude-opus-4-6" or "claude-opus-4-5-20251101" or "claude-opus-4-5" or 18 more`
 
             The model that will complete your prompt.
 
             See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
+
+            - `"claude-opus-4-6"`
+
+              Most intelligent model for building agents and coding
 
             - `"claude-opus-4-5-20251101"`
 
@@ -36057,6 +37898,8 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
           - `"pause_turn"`
 
+          - `"compaction"`
+
           - `"refusal"`
 
           - `"model_context_window_exceeded"`
@@ -36107,9 +37950,99 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
             The number of input tokens read from the cache.
 
+          - `inference_geo: string`
+
+            The geographic region where inference was performed for this request.
+
           - `input_tokens: number`
 
             The number of input tokens which were used.
+
+          - `iterations: array of BetaMessageIterationUsage or BetaCompactionIterationUsage`
+
+            Per-iteration token usage breakdown.
+
+            Each entry represents one sampling iteration, with its own input/output token counts and cache statistics. This allows you to:
+
+            - Determine which iterations exceeded long context thresholds (>=200k tokens)
+            - Calculate the true context window size from the last iteration
+            - Understand token accumulation across server-side tool use loops
+
+            - `BetaMessageIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+              Token usage for a sampling iteration.
+
+              - `cache_creation: BetaCacheCreation`
+
+                Breakdown of cached tokens by TTL
+
+                - `ephemeral_1h_input_tokens: number`
+
+                  The number of input tokens used to create the 1 hour cache entry.
+
+                - `ephemeral_5m_input_tokens: number`
+
+                  The number of input tokens used to create the 5 minute cache entry.
+
+              - `cache_creation_input_tokens: number`
+
+                The number of input tokens used to create the cache entry.
+
+              - `cache_read_input_tokens: number`
+
+                The number of input tokens read from the cache.
+
+              - `input_tokens: number`
+
+                The number of input tokens which were used.
+
+              - `output_tokens: number`
+
+                The number of output tokens which were used.
+
+              - `type: "message"`
+
+                Usage for a sampling iteration
+
+                - `"message"`
+
+            - `BetaCompactionIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+              Token usage for a compaction iteration.
+
+              - `cache_creation: BetaCacheCreation`
+
+                Breakdown of cached tokens by TTL
+
+                - `ephemeral_1h_input_tokens: number`
+
+                  The number of input tokens used to create the 1 hour cache entry.
+
+                - `ephemeral_5m_input_tokens: number`
+
+                  The number of input tokens used to create the 5 minute cache entry.
+
+              - `cache_creation_input_tokens: number`
+
+                The number of input tokens used to create the cache entry.
+
+              - `cache_read_input_tokens: number`
+
+                The number of input tokens read from the cache.
+
+              - `input_tokens: number`
+
+                The number of input tokens which were used.
+
+              - `output_tokens: number`
+
+                The number of output tokens which were used.
+
+              - `type: "compaction"`
+
+                Usage for a compaction iteration
+
+                - `"compaction"`
 
           - `output_tokens: number`
 
@@ -36504,31 +38437,9 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
                 - `"code_execution_20250825"`
 
-        - `BetaServerToolUseBlock = object { id, caller, input, 2 more }`
+        - `BetaServerToolUseBlock = object { id, input, name, 2 more }`
 
           - `id: string`
-
-          - `caller: BetaDirectCaller or BetaServerToolCaller`
-
-            Tool invocation directly from the model.
-
-            - `BetaDirectCaller = object { type }`
-
-              Tool invocation directly from the model.
-
-              - `type: "direct"`
-
-                - `"direct"`
-
-            - `BetaServerToolCaller = object { tool_id, type }`
-
-              Tool invocation generated by a server-side tool.
-
-              - `tool_id: string`
-
-              - `type: "code_execution_20250825"`
-
-                - `"code_execution_20250825"`
 
           - `input: map[unknown]`
 
@@ -36552,6 +38463,28 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
             - `"server_tool_use"`
 
+          - `caller: optional BetaDirectCaller or BetaServerToolCaller`
+
+            Tool invocation directly from the model.
+
+            - `BetaDirectCaller = object { type }`
+
+              Tool invocation directly from the model.
+
+              - `type: "direct"`
+
+                - `"direct"`
+
+            - `BetaServerToolCaller = object { tool_id, type }`
+
+              Tool invocation generated by a server-side tool.
+
+              - `tool_id: string`
+
+              - `type: "code_execution_20250825"`
+
+                - `"code_execution_20250825"`
+
         - `BetaWebSearchToolResultBlock = object { content, tool_use_id, type }`
 
           - `content: BetaWebSearchToolResultBlockContent`
@@ -36569,6 +38502,8 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
                 - `"too_many_requests"`
 
                 - `"query_too_long"`
+
+                - `"request_too_large"`
 
               - `type: "web_search_tool_result_error"`
 
@@ -37038,6 +38973,22 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
             - `"container_upload"`
 
+        - `BetaCompactionBlock = object { content, type }`
+
+          A compaction block returned when autocompact is triggered.
+
+          When content is None, it indicates the compaction failed to produce a valid
+          summary (e.g., malformed output from the model). Clients may round-trip
+          compaction blocks with null content; the server treats them as no-ops.
+
+          - `content: string`
+
+            Summary of compacted content, or null if compaction failed
+
+          - `type: "compaction"`
+
+            - `"compaction"`
+
       - `context_management: BetaContextManagementResponse`
 
         Context management response.
@@ -37086,11 +39037,15 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
         See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
 
-        - `UnionMember0 = "claude-opus-4-5-20251101" or "claude-opus-4-5" or "claude-3-7-sonnet-latest" or 17 more`
+        - `UnionMember0 = "claude-opus-4-6" or "claude-opus-4-5-20251101" or "claude-opus-4-5" or 18 more`
 
           The model that will complete your prompt.
 
           See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
+
+          - `"claude-opus-4-6"`
+
+            Most intelligent model for building agents and coding
 
           - `"claude-opus-4-5-20251101"`
 
@@ -37207,6 +39162,8 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
         - `"pause_turn"`
 
+        - `"compaction"`
+
         - `"refusal"`
 
         - `"model_context_window_exceeded"`
@@ -37257,9 +39214,99 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
           The number of input tokens read from the cache.
 
+        - `inference_geo: string`
+
+          The geographic region where inference was performed for this request.
+
         - `input_tokens: number`
 
           The number of input tokens which were used.
+
+        - `iterations: array of BetaMessageIterationUsage or BetaCompactionIterationUsage`
+
+          Per-iteration token usage breakdown.
+
+          Each entry represents one sampling iteration, with its own input/output token counts and cache statistics. This allows you to:
+
+          - Determine which iterations exceeded long context thresholds (>=200k tokens)
+          - Calculate the true context window size from the last iteration
+          - Understand token accumulation across server-side tool use loops
+
+          - `BetaMessageIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+            Token usage for a sampling iteration.
+
+            - `cache_creation: BetaCacheCreation`
+
+              Breakdown of cached tokens by TTL
+
+              - `ephemeral_1h_input_tokens: number`
+
+                The number of input tokens used to create the 1 hour cache entry.
+
+              - `ephemeral_5m_input_tokens: number`
+
+                The number of input tokens used to create the 5 minute cache entry.
+
+            - `cache_creation_input_tokens: number`
+
+              The number of input tokens used to create the cache entry.
+
+            - `cache_read_input_tokens: number`
+
+              The number of input tokens read from the cache.
+
+            - `input_tokens: number`
+
+              The number of input tokens which were used.
+
+            - `output_tokens: number`
+
+              The number of output tokens which were used.
+
+            - `type: "message"`
+
+              Usage for a sampling iteration
+
+              - `"message"`
+
+          - `BetaCompactionIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+            Token usage for a compaction iteration.
+
+            - `cache_creation: BetaCacheCreation`
+
+              Breakdown of cached tokens by TTL
+
+              - `ephemeral_1h_input_tokens: number`
+
+                The number of input tokens used to create the 1 hour cache entry.
+
+              - `ephemeral_5m_input_tokens: number`
+
+                The number of input tokens used to create the 5 minute cache entry.
+
+            - `cache_creation_input_tokens: number`
+
+              The number of input tokens used to create the cache entry.
+
+            - `cache_read_input_tokens: number`
+
+              The number of input tokens read from the cache.
+
+            - `input_tokens: number`
+
+              The number of input tokens which were used.
+
+            - `output_tokens: number`
+
+              The number of output tokens which were used.
+
+            - `type: "compaction"`
+
+              Usage for a compaction iteration
+
+              - `"compaction"`
 
         - `output_tokens: number`
 
@@ -37616,31 +39663,9 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
               - `"code_execution_20250825"`
 
-      - `BetaServerToolUseBlock = object { id, caller, input, 2 more }`
+      - `BetaServerToolUseBlock = object { id, input, name, 2 more }`
 
         - `id: string`
-
-        - `caller: BetaDirectCaller or BetaServerToolCaller`
-
-          Tool invocation directly from the model.
-
-          - `BetaDirectCaller = object { type }`
-
-            Tool invocation directly from the model.
-
-            - `type: "direct"`
-
-              - `"direct"`
-
-          - `BetaServerToolCaller = object { tool_id, type }`
-
-            Tool invocation generated by a server-side tool.
-
-            - `tool_id: string`
-
-            - `type: "code_execution_20250825"`
-
-              - `"code_execution_20250825"`
 
         - `input: map[unknown]`
 
@@ -37664,6 +39689,28 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
           - `"server_tool_use"`
 
+        - `caller: optional BetaDirectCaller or BetaServerToolCaller`
+
+          Tool invocation directly from the model.
+
+          - `BetaDirectCaller = object { type }`
+
+            Tool invocation directly from the model.
+
+            - `type: "direct"`
+
+              - `"direct"`
+
+          - `BetaServerToolCaller = object { tool_id, type }`
+
+            Tool invocation generated by a server-side tool.
+
+            - `tool_id: string`
+
+            - `type: "code_execution_20250825"`
+
+              - `"code_execution_20250825"`
+
       - `BetaWebSearchToolResultBlock = object { content, tool_use_id, type }`
 
         - `content: BetaWebSearchToolResultBlockContent`
@@ -37681,6 +39728,8 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
               - `"too_many_requests"`
 
               - `"query_too_long"`
+
+              - `"request_too_large"`
 
             - `type: "web_search_tool_result_error"`
 
@@ -38150,6 +40199,22 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
           - `"container_upload"`
 
+      - `BetaCompactionBlock = object { content, type }`
+
+        A compaction block returned when autocompact is triggered.
+
+        When content is None, it indicates the compaction failed to produce a valid
+        summary (e.g., malformed output from the model). Clients may round-trip
+        compaction blocks with null content; the server treats them as no-ops.
+
+        - `content: string`
+
+          Summary of compacted content, or null if compaction failed
+
+        - `type: "compaction"`
+
+          - `"compaction"`
+
     - `context_management: BetaContextManagementResponse`
 
       Context management response.
@@ -38198,11 +40263,15 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
       See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
 
-      - `UnionMember0 = "claude-opus-4-5-20251101" or "claude-opus-4-5" or "claude-3-7-sonnet-latest" or 17 more`
+      - `UnionMember0 = "claude-opus-4-6" or "claude-opus-4-5-20251101" or "claude-opus-4-5" or 18 more`
 
         The model that will complete your prompt.
 
         See [models](https://docs.anthropic.com/en/docs/models-overview) for additional details and options.
+
+        - `"claude-opus-4-6"`
+
+          Most intelligent model for building agents and coding
 
         - `"claude-opus-4-5-20251101"`
 
@@ -38319,6 +40388,8 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
       - `"pause_turn"`
 
+      - `"compaction"`
+
       - `"refusal"`
 
       - `"model_context_window_exceeded"`
@@ -38369,9 +40440,99 @@ curl https://api.anthropic.com/v1/messages/batches/$MESSAGE_BATCH_ID/results \
 
         The number of input tokens read from the cache.
 
+      - `inference_geo: string`
+
+        The geographic region where inference was performed for this request.
+
       - `input_tokens: number`
 
         The number of input tokens which were used.
+
+      - `iterations: array of BetaMessageIterationUsage or BetaCompactionIterationUsage`
+
+        Per-iteration token usage breakdown.
+
+        Each entry represents one sampling iteration, with its own input/output token counts and cache statistics. This allows you to:
+
+        - Determine which iterations exceeded long context thresholds (>=200k tokens)
+        - Calculate the true context window size from the last iteration
+        - Understand token accumulation across server-side tool use loops
+
+        - `BetaMessageIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+          Token usage for a sampling iteration.
+
+          - `cache_creation: BetaCacheCreation`
+
+            Breakdown of cached tokens by TTL
+
+            - `ephemeral_1h_input_tokens: number`
+
+              The number of input tokens used to create the 1 hour cache entry.
+
+            - `ephemeral_5m_input_tokens: number`
+
+              The number of input tokens used to create the 5 minute cache entry.
+
+          - `cache_creation_input_tokens: number`
+
+            The number of input tokens used to create the cache entry.
+
+          - `cache_read_input_tokens: number`
+
+            The number of input tokens read from the cache.
+
+          - `input_tokens: number`
+
+            The number of input tokens which were used.
+
+          - `output_tokens: number`
+
+            The number of output tokens which were used.
+
+          - `type: "message"`
+
+            Usage for a sampling iteration
+
+            - `"message"`
+
+        - `BetaCompactionIterationUsage = object { cache_creation, cache_creation_input_tokens, cache_read_input_tokens, 3 more }`
+
+          Token usage for a compaction iteration.
+
+          - `cache_creation: BetaCacheCreation`
+
+            Breakdown of cached tokens by TTL
+
+            - `ephemeral_1h_input_tokens: number`
+
+              The number of input tokens used to create the 1 hour cache entry.
+
+            - `ephemeral_5m_input_tokens: number`
+
+              The number of input tokens used to create the 5 minute cache entry.
+
+          - `cache_creation_input_tokens: number`
+
+            The number of input tokens used to create the cache entry.
+
+          - `cache_read_input_tokens: number`
+
+            The number of input tokens read from the cache.
+
+          - `input_tokens: number`
+
+            The number of input tokens which were used.
+
+          - `output_tokens: number`
+
+            The number of output tokens which were used.
+
+          - `type: "compaction"`
+
+            Usage for a compaction iteration
+
+            - `"compaction"`
 
       - `output_tokens: number`
 
